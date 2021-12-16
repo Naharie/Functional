@@ -16,12 +16,31 @@
         <Compile Include="Option.fs" />
         <Compile Include="Result.fs" />
         <Compile Include="Tuple.fs" />
+        <Compile Include="Math\GenericNumber.fs" />
+        <Compile Include="Math\Utilities.fs" />
+        <Compile Include="Math\Prelude.fs" />
+        <Compile Include="Collections\Array.fs" />
+        <Compile Include="Collections\List.fs" />
+        <Compile Include="Collections\Seq.fs" />
         <Compile Include="Collections\Map.fs" />
+        <Compile Include="Collections\Set.fs" />
+        <Compile Include="Collections\Dictionary.fs" />
         <Compile Include="Collections\BinaryHeap.fs" />
+        <Compile Include="Collections\FingerTree.fs" />
+        <Compile Include="Collections\Queue.fs" />
+        <Compile Include="Collections\Dequeue.fs" />
+        <Compile Include="Collections\Mutable\NegativeArray.fs" />
+        <Compile Include="ComputationBuilders\ComputationBuilders.fs" />
+        <Compile Include="ComputationBuilders\Maybe.fs" />
+        <Compile Include="ComputationBuilders\Result.fs" />
+        <Compile Include="ComputationBuilders\Prelude.fs" />
         <Compile Include="Graphs\Graph.Types.fs" />
         <Compile Include="Graphs\Graph.fs" />
-        <Compile Include="Prelude\Errors.fs" />
+        <Compile Include="Parsing\Regex.fs" />
+        <Compile Include="Parsing\Scanf.fs" />
         <Compile Include="Prelude\Parsing.fs" />
+        <Compile Include="Prelude\Errors.fs" />
+        <Compile Include="Prelude\LiftedFunctions.fs" />
         <Compile Include="Prelude\Prelude.fs" />
     </ItemGroup>
 

@@ -1,0 +1,380 @@
+[<RequireQualifiedAccess>]
+module Functional.List
+
+open System.Collections
+open System.Collections.Generic
+
+/// Creates a list of lists with the specified dimensions initialized with the specified function.
+let table inner outer initializer =
+    List.init outer (fun _ -> List.init inner initializer)
+
+/// Combines map and scan.
+let mapScan action state items =
+    items
+    |> List.scan (fun (state, _) -> action state) (state, Unchecked.defaultof<'t>)
+
+/// Combines map and scanBack.
+let mapScanBack action state items =
+    List.scanBack (fun item (state, _) ->
+        action item state
+    ) items (state, Unchecked.defaultof<'t>)
+
+/// Converts an untyped IEnumerator to an object list.
+let fromUntypedEnumerator (enumerator: IEnumerator) =
+    List.unfold (fun () ->
+        if enumerator.MoveNext() then
+            Some (enumerator.Current, ())
+        else
+            None
+    ) ()
+/// Converts an IEnumerator<'t> to a 't list.
+let fromEnumerator (enumerator: IEnumerator<'t>) =
+    List.unfold (fun () ->
+        if enumerator.MoveNext() then
+            Some (enumerator.Current, ())
+        else
+            None
+    ) ()
+
+/// Converts a loose collection like XmlNodeList
+let inline fromLooseCollection< ^c, ^t when ^c : (member Count: int) and ^c : (member Item: int -> ^t) > (collection: ^c) =
+    let count = (^c : (member Count: int) collection)
+    
+    List.init count (fun index ->
+        (^c : (member Item: int -> ^t) (collection, index))
+    )
+
+/// Acting as a combination of map and choose, the resulting collection contains the elements from the original list for which the replacement function returned none.
+/// If the replacement function returned Some(x) instead, then the value of x replaces the original element from the collection.
+let replace replacement list =
+    list
+    |> List.map (fun item ->
+        replacement item
+        |> Option.defaultValue item
+    )
+/// Creates a new list with the value at the specified index replaced with the specified value.
+/// If the index is out of range, then the original list is returned.
+let updateAt index value list =
+    let original = list
+    
+    let rec update index passed list =
+        match list with
+        | [] -> original
+        | head :: rest ->
+            if index = 0 then
+                List.append (List.rev passed) (value :: rest)
+            else
+                update (index - 1) (head :: passed) rest
+    
+    update index [] list
+
+/// Applies the specified folding function to the list as long as the state is not None.
+let foldWhile folder state list =
+    let rec loop (state: 'state) list =
+        match list with
+        | [] -> state
+        | item :: list ->
+            let newState = folder state item
+
+            match newState with
+            | Some state ->
+                loop state list
+            | None ->
+                state
+
+    loop state list
+/// Applies the specified folding function to the list as long as the state is not None.
+let foldBackWhile folder list state =
+    list
+    |> List.toArray
+    |> Array.foldBackWhile folder <| state
+
+/// Performs a standard fold unless the folding function returns none, in which case the overall function returns none.
+let tryFold folder state list =
+    let rec loop (state: 'state) list =
+        match list with
+        | [] -> Some state
+        | item :: list ->
+            let newState = folder state item
+
+            match newState with
+            | Some state ->
+                loop state list
+            | None -> None
+
+    loop state list
+/// Performs a standard fold back unless the folding function returns none, in which case the overall function returns none.
+let tryFoldBack folder list state =
+    list
+    |> List.toArray
+    |> Array.tryFoldBack folder <| state
+
+/// Combines fold and filter into a single function that threads the state object through the filtering process.
+let thresh folder state list =
+    let list, state =
+        List.fold (fun (result, state) item ->
+            let keep, state = folder state item
+
+            if keep then
+                (item :: result, state)
+            else
+                (result, state)
+        ) ([], state) list
+
+    (List.rev list), state
+/// Combines foldBack and filter into a single function that threads the state object through the filtering process.
+let threshBack folder list state =
+    List.foldBack (fun item (result, state) ->
+        let keep, state = folder item state
+    
+        if keep then
+            (item :: result, state)
+        else
+            (result, state)
+    ) list ([], state)
+
+/// Combines fold and choose into a single function that threads the state object through the filtering process.
+let winnow folder state list =
+    let list, state =
+        List.fold (fun (result, state) item ->
+            let value, state = folder state item
+
+            match value with
+            | Some newValue ->
+                (newValue :: result, state)
+            | None ->
+                (result, state)
+        ) ([], state) list
+
+    (List.rev list), state
+/// Combines fold and choose into a single function that threads the state object through the filtering process.
+let winnowBack folder list state =
+    List.foldBack (fun item (result, state) ->
+        let value, state = folder item state
+    
+        match value with
+        | Some newValue ->
+            (newValue :: result), state
+        | None ->
+            result, state
+    ) list ([], state)
+
+/// Returns the first element for which the given predicate returns "true".
+/// If there is no such element then a KeyNotFoundException is raised instead.
+let findi predicate list =
+    let rec find index list =
+        match list with
+        | [] -> raise (KeyNotFoundException "An element matching the predicate was not found in the list.")
+        | item :: rest ->
+            if predicate index item then
+                item
+            else
+                find (index + 1) rest
+
+    find 0 list
+
+/// Returns the last element for which the given predicate returns "true".
+/// If there is no such element then a KeyNotFoundException is raised instead.
+let findBacki predicate list =
+    list
+    |> List.toArray
+    |> Array.findBack predicate
+
+/// Returns the first element for which the given predicate returns "true".
+/// If there is no such element then None is returned instead.
+let tryFindi predicate list =
+    let rec find index list =
+        match list with
+        | [] -> None
+        | item :: rest ->
+            if predicate index item then
+                Some item
+            else
+                find (index + 1) rest
+
+    find 0 list
+
+/// Returns the last element for which the given predicate returns "true".
+/// If there is no such element then None is returned instead.
+let tryFindBacki predicate list =
+    list
+    |> List.toArray
+    |> Array.tryFindBacki predicate
+
+/// Returns the first element for which the given predicate returns Some x.
+/// If there is no such element then a KeyNotFoundException is raised instead.
+let picki predicate list =
+    let rec pick index list =
+        match list with
+        | [] -> raise (KeyNotFoundException "An element matching the predicate was not found in the list.")
+        | item :: rest ->
+            match predicate index item with
+            | Some v -> v
+            | None ->
+                pick (index + 1) rest
+
+    pick 0 list
+
+/// Returns the first element for which the given predicate returns Some x.
+/// If there is no such element then None is returned instead.
+let tryPicki predicate list =
+    let rec pick index list =
+        match list with
+        | [] -> None
+        | item :: rest ->
+            match predicate index item with
+            | Some v -> Some v
+            | None ->
+                pick (index + 1) rest
+
+    pick 0 list
+
+/// For each element apply the given function, concatenate all the results and returned the combined result.
+let collecti mapping list =
+    [
+        let mutable index = 0
+        
+        for item in list do
+            yield! mapping index item
+            index <- index + 1
+    ]
+
+/// Returns a new collection containing only the elements of the collection for which the given predicate returns true.
+let filteri predicate list =
+    [
+        let mutable index = 0
+        
+        for item in list do
+            if predicate index item then
+                yield item
+                
+            index <- index + 1
+    ]
+/// Returns a new collection containing only the elements of the collection for which the given predicate returns Some;
+let choosei predicate list =
+    [
+        let mutable index = 0
+        
+        for item in list do
+            match predicate index item with
+            | Some value -> yield value
+            | None -> ()
+            
+            index <- index + 1
+    ]
+
+/// Removes all instances of the specified item from the list.
+let without (item: 't) (list: 't list) =
+    list
+    |> List.filter ((<>) item)
+/// Removes the item a the specified index (if it is within the list).
+let removeAt (index: int) (list: 't list) =
+    if index < 0 then list
+    elif index = 0 then
+        match list with
+        | [] -> []
+        | _ :: rest -> rest
+    else
+        let original = list
+        
+        let rec remove index passed list =
+            match list with
+            | [] -> original
+            | head :: rest ->
+                if index = 0 then
+                    List.append (List.rev passed) rest
+                else
+                    remove (index - 1) (head :: passed) rest
+    
+        remove index [] list
+
+/// Adds the item to the beginning of the list.
+/// An alias for prepend and (::)
+let inline cons (item: 't) (list: 't list) =
+    item :: list
+/// Adds the item to the beginning of the collection.
+let inline prependItem (item: 't) (list: 't list) =
+    item :: list
+/// Adds the item to the end of the collection.
+let appendItem (item: 't) (list: 't list) =
+    List.append list [ item ]
+
+/// All possible insertions of a given item into the list.
+/// insertions 4 [ 1; 2; 3 ] -> [ 4; 1; 2; 3 ]; [ 1; 4; 2; 3 ]; [ 1; 2; 4; 3 ]; [ 1; 2; 3; 4 ]
+let rec insertions x items =
+    match items with
+    | [] -> [ [ x ] ]
+    | y :: ys as xs ->
+        (x::xs) :: (List.map (prependItem y) (insertions x ys))
+/// All possible permutations.
+let rec permutations items =
+    match items with
+    | [] -> [ [] ]
+    | x :: xs ->
+        List.collect (insertions x) (permutations xs)
+
+/// Returns all the non empty direct and indirect tails of a list.
+/// Tails [ 1; 2; 3; 4 ] ==> [ [ 1; 2; 3; 4 ]; [ 2; 3; 4 ]; [ 3; 4 ]; [ 4 ] ]
+let tails (list: 't list) =
+    let rec loop tails list =
+        match list with
+        | [] | [ _ ] -> tails
+        | _ :: tail ->
+            loop (tail :: tails) tail
+
+    match list with
+    | [] -> []
+    | _ -> loop [ list ] list
+
+// Returns all pairs where both items are from unique indexes.
+let pairs list =
+    [
+        let mutable outerIndex = 0
+        
+        for first in list do
+            let mutable innerIndex = 0
+            
+            for second in list do
+                if innerIndex <> outerIndex then
+                    yield (first, second)
+                
+                innerIndex <- innerIndex + 1
+            
+            outerIndex <- outerIndex + 1
+    ]
+
+/// Splits the input list based on the specified rule function.
+/// The item that is split on is not included in the results.
+let splitBy (rule: 't -> bool) (list: 't list) =
+    let rec loop chunks buffer remaining =
+        match remaining with
+        | [] ->
+            match buffer with
+            | [] -> chunks
+            | _ -> List.rev (List.rev buffer :: chunks)
+
+        | item :: rest ->
+            if rule item then
+                loop (List.rev buffer :: chunks) [] rest
+            else
+                loop chunks (item :: buffer) rest
+
+    loop [] [] list
+
+/// Splits the input array based on the specified rule function.
+/// The item that is split on is included in the results as the first item of each section.
+let chunkBy (rule: 't -> bool) (list: 't list) =
+    let rec loop chunks buffer remaining =
+        match remaining with
+        | [] ->
+            match buffer with
+            | [] -> chunks
+            | _ -> List.rev (List.rev buffer :: chunks)
+
+        | item :: rest ->
+            if rule item then
+                loop (List.rev buffer :: chunks) [ item ] rest
+            else
+                loop chunks (item :: buffer) rest
+
+    loop [] [] list
