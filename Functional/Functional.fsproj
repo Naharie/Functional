@@ -19,6 +19,7 @@
         <Compile Include="Math\GenericNumber.fs" />
         <Compile Include="Math\Utilities.fs" />
         <Compile Include="Math\Prelude.fs" />
+        <Compile Include="Math\Binary.fs" />
         <Compile Include="Collections\Array.fs" />
         <Compile Include="Collections\List.fs" />
         <Compile Include="Collections\Seq.fs" />

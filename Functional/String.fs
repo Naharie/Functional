@@ -234,3 +234,13 @@ let tryHead (string: string) =
     match string with
     | null | "" -> None
     | _ -> Some string.[0]
+
+/// Indexes into the string. The first character has index 0.
+let item index (string: string) = string.[index]
+
+/// <summary>Tries to find the nth character in the string. Returns <c>None</c> if index is negative or the string does not contain enough characters.</summary>
+let tryItem index (string: string) =
+    if index < 0 || index >= string.Length then
+        None
+    else
+        Some string.[index]

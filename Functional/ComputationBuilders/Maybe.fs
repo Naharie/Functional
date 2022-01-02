@@ -13,9 +13,7 @@ type MaybeBuilder() =
     member _.ReturnFrom (value: Nullable<'t>) =
         Value (if value.HasValue then Some value.Value else None)
     member _.ReturnFrom (value: (bool * 't)) =
-        Value (if fst value then Some (snd valumodule Functional.Computations.Result
-
-e) else None)
+        Value (if fst value then Some (snd value) else None)
 
     member this.Bind (value: 't Computation, func) =
         match value with

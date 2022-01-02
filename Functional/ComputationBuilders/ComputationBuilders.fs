@@ -1,4 +1,4 @@
-module Functional.ComputationBuilders
+namespace Functional.ComputationBuilders
 
 /// Represents a intermediate computation in a computation expression.
 type Computation<'t> =

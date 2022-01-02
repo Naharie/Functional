@@ -77,16 +77,6 @@ module TupleInternals =
 
 #nowarn "44"
 
-/// <summary>
-/// Return the first element of a tuple, <c>fst (a,b) = a</c>.
-/// </summary>
-let inline fst tuple = TupleInternals.First $ tuple
-
-/// <summary>
-/// Return the second element of a tuple, <c>fst (a,b) = b</c>.
-/// </summary>
-let inline snd tuple = TupleInternals.Second $ tuple
-
 let inline map (mapping: 'a -> 'b) tuple = (TupleInternals.Map $ tuple) mapping
 let inline rev tuple = TupleInternals.Rev $ tuple
 let inline iter action tuple = (TupleInternals.Iter $ tuple) action
