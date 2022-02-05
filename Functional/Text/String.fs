@@ -2,16 +2,19 @@
 module Functional.String
 
 open System
+open System.Text
+
+open Functional
 
 /// Represents the empty string.
 let empty = String.Empty
 
 /// Indicates whether the specified string is either null or an empty string.
-let isNullOrEmpty value =
+let inline isNullOrEmpty value =
     String.IsNullOrEmpty value
 
 /// Indicates whether the specified string is either null or consists entirely of whitespace characters.
-let isNullOrWhitespace value =
+let inline isNullOrWhitespace value =
     String.IsNullOrWhiteSpace value
 
 /// Returns a value indicating whether a specified substring occurs within a specified string.
@@ -22,7 +25,7 @@ let contains substring (string: string) =
         string.Contains substring
 
 /// Compares two specified strings and returns an integer that indicates their relative positions in sort order.
-let compare (comparision: StringComparison) a b =
+let inline compare (comparision: StringComparison) a b =
     String.Compare(a, b, comparision)
 
 /// Determines whether the start of the specified string instances matches the specified substring.
@@ -134,7 +137,10 @@ let split (separators: #seq<string>) (string: string) =
     if isNull string then
         [||]
     else
-        let separators = Seq.toArray separators
+        let separators =
+            separators
+            |> Seq.filter (isNullOrEmpty >> not)
+            |> Seq.toArray
 
         if Array.isEmpty separators then
             [| string |]
@@ -153,6 +159,31 @@ let splitOptions (options: StringSplitOptions) (separators: #seq<string>) (strin
         else
             string.Split (separators, options)
 
+/// Splits a string into substrings by taking everything before the given index as the first string, and everything after the given index as the second.
+let splitAt (index: int) (string: string) =
+    if index <= 0 then
+        "", string
+    elif index >= string.Length then
+        string, ""
+    else
+        (string.Substring(0, index), string.Substring index)
+        
+/// Inserts the specified value into the specified string at the given index.
+let insertAt (index: int) (value: string) (string: string) =
+    if isNull string && index = 0 then
+        value
+    else
+        let builder = StringBuilder()
+        let index = clamp index 0 string.Length
+        
+        builder
+            .Append(string.Substring(0, index))
+            .Append(value)
+            .Append(string.Substring(index))
+            |> ignore
+            
+        builder.ToString()
+
 /// Returns the specified substring of the specified string.
 let substring (length: int option) (startIndex: int) (string: string) =
     if isNull string then
@@ -164,8 +195,50 @@ let substring (length: int option) (startIndex: int) (string: string) =
         | None ->
             string.Substring startIndex
 
+/// Returns the first n characters from the string.
+let take (count: int) (string: string) =
+    if isNull string && count = 0 then
+        null
+    elif isNull string || count < 0 || count > string.Length then
+        raise (ArgumentOutOfRangeException $"{nameof count} must be greater than zero and less than the size of the string. To return at most count elements, use String.truncate instead.")
+    else
+        string.Substring(0, count)
+
+/// Returns all but the first n characters from the string.
+let skip (count: int) (string: string) =
+    if isNull string && count = 0 then
+        null
+    elif isNull string || count > string.Length then
+        raise (ArgumentOutOfRangeException $"{nameof count} must be less than the size of the string. To skip at most count elements, use String.drop instead.")
+    elif count <= 0 then
+        string
+    else
+        string.Substring count
+      
+/// Returns at most the first n characters from the string.  
+let truncate (count: int) (string: string) =
+    if isNull string then
+        null
+    elif count <= 0 then
+        ""
+    elif count < string.Length then
+        string.Substring(0, count)
+    else
+        string
+      
+/// Returns the result of skipping no more than, but potentially less than, n characters from the string.  
+let drop (count: int) (string: string) =
+    if isNull string then
+        null
+    elif count <= 0 then
+        string
+    elif count < string.Length then
+        string.Substring count
+    else
+        ""
+
 /// Removes all leading and trailing whitespace characters from the specified string.
-let trim (string: string) =
+let inline trim (string: string) =
     if isNull string then
         null
     else
@@ -236,11 +309,17 @@ let tryHead (string: string) =
     | _ -> Some string.[0]
 
 /// Indexes into the string. The first character has index 0.
-let item index (string: string) = string.[index]
+let item index (string: string) =
+    if isNull string then
+        '\x00'
+    elif index < 0 || index > string.Length then
+        raise (IndexOutOfRangeException $"{nameof index} must be greater than zero and less than the length of the string.")
+    else
+        string.[index]
 
 /// <summary>Tries to find the nth character in the string. Returns <c>None</c> if index is negative or the string does not contain enough characters.</summary>
 let tryItem index (string: string) =
-    if index < 0 || index >= string.Length then
+    if isNull string || index < 0 || index >= string.Length then
         None
     else
         Some string.[index]
