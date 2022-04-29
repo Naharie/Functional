@@ -2,6 +2,7 @@
 module Functional.String
 
 open System
+open System.Collections.Generic
 open System.Text
 
 open Functional
@@ -98,15 +99,31 @@ let replaceChar (old: char) ``new`` (string: string) =
 
 /// Returns a new string in which all occurrences of a specified string are replaced with another specified string.
 /// This function will return null if the input is null.
-let replace (old: string) ``new`` (string: string) =
+let inline replace (old: string) ``new`` (string: string) =
     if isNull string then
         null
     elif isNull old then
         string
-    elif isNull ``new`` then
-        string.Replace(old, "")
     else
-        string.Replace(old, ``new``)
+        string.Replace(old, if isNull ``new`` then "" else ``new``)
+        
+let replaceAll (replacements: #seq<string * string>) (string: string) =
+    if isNull string then
+        null
+    elif isNull replacements then
+        string
+    else
+        let replacements = Seq.toArray replacements
+        let buffer = StringBuilder string.Length
+        
+        let mutable index = 0
+        
+        while index < string.Length do
+            
+            
+            index <- index + 1
+        
+        buffer.ToString()
 
 /// Splits a string into substrings based on the characters in the sequence.
 let splitChar (characters: #seq<char>) (string: string) =
