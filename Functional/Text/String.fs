@@ -2,7 +2,6 @@
 module Functional.String
 
 open System
-open System.Collections.Generic
 open System.Text
 
 open Functional
@@ -31,28 +30,44 @@ let inline compare (comparision: StringComparison) a b =
 
 /// Determines whether the start of the specified string instances matches the specified substring.
 let startsWith substring (string: string) =
-    if isNull string || isNull substring then
+    if isNullOrEmpty substring then
+        true
+    elif isNull string then
         false
     else
         string.StartsWith substring
+        
+let startsWithAtIndex index (substring: string) (string: string) =
+    if isNullOrEmpty substring then
+        true
+    elif isNull string || index < 0 || index + substring.Length > string.Length then
+        false
+    else
+        string.IndexOf(substring, index, substring.Length) = index
 
 /// Determines whether the start of the specified string instances matches the specified substring when compared using the specified comparision option.
 let startsWithComparision comparision substring (string: string) =
-    if isNull string || isNull substring then
+    if isNullOrEmpty substring then
+        true
+    elif isNull string then
         false
     else
         string.StartsWith(substring, comparision)
 
 /// Determines whether the end of the specified string instances matches the specified substring.
 let endsWith substring (string: string) =
-    if isNull string || isNull substring then
+    if isNull substring then
+        true
+    elif isNull string then
         false
     else
         string.EndsWith substring
 
 /// Determines whether the end of the specified string instances matches the specified substring when compared using the specified comparision option.
 let endsWithComparision comparision substring (string: string) =
-    if isNull string || isNull substring then
+    if isNull substring then
+        true
+    elif isNull string then
         false
     else
         string.EndsWith(substring, comparision)
@@ -63,28 +78,36 @@ let equals comparision a b =
 
 /// Reports the zero-based index of the first occurrence of the specified substring within the specified string.
 let indexOf substring (string: string) =
-    if isNull string || isNull substring then
+    if isNullOrEmpty substring then
+        0
+    elif isNull string then
         -1
     else
         string.IndexOf substring
 
 /// Reports the zero-based index of the first occurrence of the specified substring within the specified string when compared using the specified comparision options.
 let indexOfComparision (comparision: StringComparison) (substring: string) (string: string) =
-    if isNull string || isNull substring then
+    if isNullOrEmpty substring then
+        0
+    elif isNull string then
         -1
     else
         string.IndexOf(substring, comparision)
 
 /// Reports the zero-based index of the last occurrence of the specified substring within the specified string.
 let lastIndexOf (substring: string) (string: string) =
-    if isNull string || isNull substring then
+    if isNullOrEmpty substring then
+        0
+    elif isNull string then
         -1
     else
         string.LastIndexOf substring
 
 /// Reports the zero-based index of the last occurrence of the specified substring within the specified string when compared using the specified comparision options.
 let lastIndexOfComparision (comparision: StringComparison) (substring: string) (string: string) =
-    if isNull string || isNull substring then
+    if isNullOrEmpty substring then
+        0
+    elif isNull string then
         -1
     else
         string.LastIndexOf (substring, comparision)
@@ -107,21 +130,19 @@ let inline replace (old: string) ``new`` (string: string) =
     else
         string.Replace(old, if isNull ``new`` then "" else ``new``)
         
+/// Performs all the specified replacements.
+/// Replacements are not done recursively; instead they are processed strictly linearly from first to last.
 let replaceAll (replacements: #seq<string * string>) (string: string) =
     if isNull string then
         null
-    elif isNull replacements then
+    elif isNull (box replacements) then
         string
     else
         let replacements = Seq.toArray replacements
-        let buffer = StringBuilder string.Length
-        
-        let mutable index = 0
-        
-        while index < string.Length do
-            
-            
-            index <- index + 1
+        let buffer = StringBuilder string
+
+        for key, value in replacements do
+            buffer.Replace(key, value) |> ignore
         
         buffer.ToString()
 
