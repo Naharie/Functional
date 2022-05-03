@@ -1,6 +1,12 @@
 [<AutoOpen>]
 module Functional.LiftedFunctions
 
+open Functional
+
+let then', else' = (), ()
+
+let lift f x = fun y -> f (x y)
+
 let liftL f a b = fun x -> f (a x) b
 let liftR f a b = fun x -> f a (b x)
 
@@ -8,7 +14,9 @@ let lift2 f a b = fun x y -> f (a x) (b y)
 let lift2R f b a = fun x y -> f (a x) (b y)
 
 let lift2S f a b = fun x -> f (a x) (b x)
-let lift2RS f b a = fun x -> f (a x) (b x) 
+let lift2RS f b a = fun x -> f (a x) (b x)
+
+let const' x _ = x
 
 /// Flips the order of the first two arguments taken by a function.
 let (!^) f = fun a b -> f b a

@@ -50,7 +50,7 @@
         
         <Compile Include="Prelude\Parsing.fs" />
         <Compile Include="Prelude\Errors.fs" />
-        <Compile Include="Prelude\LiftedFunctions.fs" />
+        <Compile Include="Prelude\Functions.fs" />
         <Compile Include="Prelude\Prelude.fs" />
     </ItemGroup>
 
