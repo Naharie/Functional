@@ -19,6 +19,7 @@ let Sequential (computations: #seq<Async<'t>>): Async<'t[]> =
 let AwaitObservable (observable: IObservable<'t>) =
     Async.FromContinuations (fun (finish, _, _) ->
         Observable.once finish observable
+        |> ignore
     )
 
 /// Asynchronously applies the given function to the result of the asynchronous value.
