@@ -1,104 +1,125 @@
-﻿module Functional.Preview
+﻿[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Functional.Preview
 
 open System
+open System.Collections
+open Functional.Preview
 open Microsoft.DotNet.Interactive.Formatting
+open Html
 
-let private labelledText label text (writer: IO.TextWriter) =
-    writer.Write($"""
-        <div style="display: inline-block; padding: 5px; border-radius: 5px; background-color: lightgray;">
-            <span style="color: #303030;">%s{label}: </span>
-            <span style="color: #1171c2;">%s{text}</span>
-        </div>
-    """)
+let private labelledBlock label value (writer: IO.TextWriter) =
+    div [
+        style """
+            display: inline-block;
+            padding: 5px;
+            border-radius: 5px;
+            background-color: lightgray;
+        """
+        span [ style "color: #303030;"; text (label + ": ") ]
+        span [ style "color: #1171c2;"; value  ]
+    ]
+    |> string
+    |> writer.Write
 
 let private registerPrimitives () =
+    // DateTime
+    
     Formatter.Register<DateTime>((fun (date: DateTime) ->
-        labelledText "Date" (date.ToString "ddd, MMM d, yyyy, H:mm")
+        labelledBlock "Date" (date.ToString "ddd, MMM d, yyyy, H:mm" |> text)
     ), "text/html")
     
     Formatter.Register<DateTimeOffset>((fun (offset: DateTimeOffset) ->
-        labelledText "Date" (offset.ToString "ddd, MMM d, yyyy H:mm")
+        labelledBlock "Date" (offset.ToString "ddd, MMM d, yyyy H:mm" |> text)
     ), "text/html")
     
+    // Html
+    
+    Formatter.Register<Html>(fun value (writer: IO.TextWriter) ->
+        writer.Write (string value)
+    )
+
 let private registerCollections () =
-    let enumerableFormatter =
-        Formatter.RegisteredFormatters true
-        |> Seq.find (fun formatter ->
-            formatter.MimeType = "text/html"
-            && formatter.Type.FullName = "System.Collections.IEnumerable"
-        )
+    let enumerableFormatter (enumerable: IEnumerable) (writer: IO.TextWriter) =
+        table [
+            thead [ td []; td [ text "Item" ] ]
+            
+            let enumerable =
+                enumerable
+                |> Seq.cast<obj>
+                |> Seq.indexed
+                |> Seq.truncate Formatter.ListExpansionLimit
+            
+            for index, value in enumerable do
+                tr [
+                    td [ text (string index) ]
+                    td [ raw (Formatter.ToDisplayString(value, "text/html")) ]
+                ]
+        ]
+        |> string
+        |> writer.Write
         
     let nestedArrays (value: Array) (writer: IO.TextWriter) =
-        writer.Write "<table>"
-            
-        let rowLength =
-            seq {
-                for i in 0..value.Length - 1 do
-                    (value.GetValue i :?> Array).Length
-            }
-            |> Seq.max
-            
-        writer.Write "<thead>"
-            
-        for i in 0..rowLength - 1 do
-            writer.Write $"<td>Item {i + 1}</td>"
-            
-        writer.Write "</thead>"
-        writer.Write "<tbody>"
+        table [
+            let rowLength =
+                seq {
+                    for i in 0..value.Length - 1 do
+                        (value.GetValue i :?> Array).Length
+                }
+                |> Seq.max
 
-        for i in 0..(min Formatter.ListExpansionLimit (value.Length - 1)) do
-            let row = value.GetValue i :?> Array
-            
-            writer.Write "<tr>"
-
-            for j in 0..row.Length - 1 do
-                writer.Write "<td>"
-                writer.Write (row.GetValue(j).ToDisplayString "text/html")
-                writer.Write "</td>"
-                
-            for j in row.Length..rowLength - 1 do
-                writer.Write "<td></td>"
-                
-            writer.Write "</tr>"
-
-        writer.Write "</tbody>"
-        writer.Write "</table>"
+            thead [ for i in 0..rowLength - 1 do td [ text $"Item {i}" ] ]
+            tbody [
+                for i in 0..(min Formatter.ListExpansionLimit (value.Length - 1)) do
+                    let row = value.GetValue i :?> Array
+                    
+                    tr [
+                        for j in 0..row.Length - 1 do
+                            td [ raw (row.GetValue(j).ToDisplayString "text/html") ]
+                        
+                        for _ in row.Length..rowLength - 1 do td []
+                    ]
+            ]
+        ]
+        |> string
+        |> writer.Write
     let squareArray (value: Array) (writer: IO.TextWriter) =
-        writer.Write "<table>"
-        writer.Write "<thead>"
+        table [
+            let length = value.GetUpperBound 0
+            let rowLength = value.GetUpperBound 1
             
-        let length = value.GetUpperBound 0
-        let rowLength = value.GetUpperBound 1
+            thead [ for i in 0..rowLength do td [ text $"Item {i}" ] ]
+            tbody [
+                for i in 0..(min Formatter.ListExpansionLimit length) do
+                    tr [
+                        for j in 0..rowLength do
+                            td [ raw(value.GetValue(i, j).ToDisplayString "text/html") ]
+                    ]
+            ]
+        ]
+        |> string
+        |> writer.Write
+        
+    let formatEnumerable (enumerable: IEnumerable) (writer: IO.TextWriter) =
+        if enumerable.GetType().IsArray then
+            let value = enumerable :?> Array
             
-        for i in 0..rowLength do
-            writer.Write $"<td>Item {i + 1}</td>"
-            
-        writer.Write "</thead>"
-        writer.Write "<tbody>"
-
-        for i in 0..(min Formatter.ListExpansionLimit length) do 
-            writer.Write "<tr>"
-
-            for j in 0..rowLength do
-                writer.Write "<td>"
-                writer.Write (value.GetValue(i, j).ToDisplayString "text/html")
-                writer.Write "</td>"
-                
-            writer.Write "</tr>"
-
-        writer.Write "</tbody>"
-        writer.Write "</table>"
-    
-    Formatter.Register<Array>((fun (value: Array) (writer: IO.TextWriter) ->
-        if value.Rank > 2 then
-            enumerableFormatter.Format(value, writer)
-        elif value.Rank = 2 then
-            squareArray value writer
-        elif (let valueType = value.GetType().GetElementType() in valueType.IsArray) then
-            nestedArrays value writer
+            if value.Rank > 2 then
+                enumerableFormatter value writer
+            elif value.Rank = 2 then
+                squareArray value writer
+            elif (let valueType = value.GetType().GetElementType() in valueType.IsArray) then
+                nestedArrays value writer
+            else
+                enumerableFormatter value writer
         else
-            enumerableFormatter.Format(value, writer)
+            enumerableFormatter enumerable writer
+    
+    Formatter.Register<IEnumerable> enumerableFormatter
+    Formatter.Register(typedefof<seq<_>>, (fun (value: obj) ->
+        formatEnumerable (value :?> IEnumerable)
     ), "text/html")
+    
+    // TODO: Proper tuple support.
     
 let register () =
     registerPrimitives()
