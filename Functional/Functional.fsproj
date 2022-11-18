@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net5.0</TargetFramework>
+        <TargetFramework>net7.0</TargetFramework>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <WarnOn>3390;$(WarnOn)</WarnOn>
     </PropertyGroup>
@@ -17,12 +17,18 @@
         <Compile Include="Result.fs" />
         <Compile Include="Tuple.fs" />
 
+        <Compile Include="Functions\Lifted.fs" />
+
+        <Compile Include="Functions\Utilities.fs" />
+
         <Compile Include="Math\GenericNumber.fs" />
         <Compile Include="Math\Utilities.fs" />
-        <Compile Include="Math\Prelude.fs" />
         <Compile Include="Math\Binary.fs" />
+        <Compile Include="Math\Prelude.fs" />
         
         <Compile Include="Text\String.fs" />
+        
+        <Compile Include="Collections\CollectionTypes.fs" />
         
         <Compile Include="Collections\Array.fs" />
         <Compile Include="Collections\List.fs" />
@@ -34,8 +40,6 @@
         <Compile Include="Collections\FingerTree.fs" />
         <Compile Include="Collections\Queue.fs" />
         <Compile Include="Collections\Dequeue.fs" />
-        
-        <Compile Include="Collections\Mutable\NegativeArray.fs" />
         
         <Compile Include="ComputationBuilders\ComputationBuilders.fs" />
         <Compile Include="ComputationBuilders\Maybe.fs" />
@@ -50,8 +54,11 @@
         
         <Compile Include="Prelude\Parsing.fs" />
         <Compile Include="Prelude\Errors.fs" />
-        <Compile Include="Prelude\Functions.fs" />
         <Compile Include="Prelude\Prelude.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="FsHttp" Version="9.1.1" />
     </ItemGroup>
 
 </Project>

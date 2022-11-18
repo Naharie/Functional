@@ -8,6 +8,23 @@ open System.Collections.Generic
 let table inner outer initializer =
     List.init outer (fun _ -> List.init inner initializer)
 
+/// Maps the given action over list of lists.
+let mapTable action table =
+    table
+    |> List.map (
+        List.map action
+    )
+    
+/// Maps the given action over a table, passing in a tuple of the row and column numbers.
+let mapTablei action table =
+    table
+    |> List.mapi (fun rowNumber row ->
+        row
+        |> List.map (fun columnNumber ->
+            action (rowNumber, columnNumber)
+        )
+    )
+
 /// Combines map and scan.
 let mapScan action state items =
     items
@@ -77,10 +94,9 @@ let foldWhile folder state list =
             let newState = folder state item
 
             match newState with
-            | Some state ->
+            | Done value -> value
+            | Continue state ->
                 loop state list
-            | None ->
-                state
 
     loop state list
 /// Applies the specified folding function to the list as long as the state is not None.
@@ -378,3 +394,40 @@ let chunkBy (rule: 't -> bool) (list: 't list) =
                 loop chunks (item :: buffer) rest
 
     loop [] [] list
+
+let separateBy (rule: 't -> bool) (list: 't list) =
+    let group = ResizeArray()
+    
+    [
+        for item in list do
+            if rule item then
+                yield Seq.toList group
+                yield [ item ]
+                group.Clear()
+            else
+                group.Add item
+                
+        if group.Count > 0 then
+            yield Seq.toList group
+    ]
+    
+let collapse (rule: 't -> 't -> 't option) list =
+    if List.isEmpty list then
+        List.empty
+    else
+        [
+            let mutable state = list.Head
+            let mutable list = list.Tail
+            
+            while not list.IsEmpty do
+                match rule state list.Head with
+                | Some nextState ->
+                    state <- nextState
+                    list <- list.Tail
+                | None ->
+                    yield state
+                    state <- list.Head
+                    list <- list.Tail
+            
+            yield state
+        ]

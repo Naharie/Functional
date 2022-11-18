@@ -8,6 +8,23 @@ open System.Collections.Generic
 let table inner outer initializer =
     Seq.init outer (fun _ -> Seq.init inner initializer)
 
+/// Maps the given action over a sequence of sequences.
+let mapTable action table =
+    table
+    |> Seq.map (
+        Seq.map action
+    )
+    
+/// Maps the given action over a table, passing in a tuple of the row and column numbers.
+let mapTablei action table =
+    table
+    |> Seq.mapi (fun rowNumber row ->
+        row
+        |> Seq.map (fun columnNumber ->
+            action (rowNumber, columnNumber)
+        )
+    )
+
 /// Combines map and scan.
 let mapScan action state (items: #seq<'t>) =
     items
@@ -66,8 +83,8 @@ let foldWhile folder state (sequence: #seq<_>) =
             let newState = folder state enumerator.Current
 
             match newState with
-            | Some state -> loop state
-            | None -> state
+            | Done state -> state
+            | Continue state -> loop state
         else
             state
 
@@ -337,4 +354,38 @@ let chunkBy (rule: 't -> bool) (sequence: #seq<'t>) =
 
         if buffer.Count > 0 then 
             yield buffer.ToArray() |> Seq.ofArray
+    }
+
+let separateBy (rule: 't -> bool) (sequence: seq<'t>) =
+    let group = ResizeArray()
+    
+    seq {
+        for item in sequence do
+            if rule item then
+                yield group.ToArray() |> Seq.ofArray
+                yield [| item |]
+                group.Clear()
+            else
+                group.Add item
+
+        if group.Count > 0 then
+            yield group.ToArray() |> Seq.ofArray
+    }
+
+let collapse (rule: 't -> 't -> 't option) (sequence: #seq<'t>) =
+    seq {
+        let enumerator = sequence.GetEnumerator()
+        
+        if enumerator.MoveNext() then
+            let mutable state = enumerator.Current
+            
+            while enumerator.MoveNext() do
+                match rule state enumerator.Current with
+                | Some nextState ->
+                    state <- nextState
+                | None ->
+                    yield state
+                    state <- enumerator.Current
+
+            yield state
     }

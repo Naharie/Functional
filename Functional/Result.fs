@@ -6,12 +6,6 @@ let attempt func =
     try Ok <| func ()
     with | error -> Error error
 
-/// Converts a Result<'T, 'E> to an option.
-let toOption result =
-    match result with
-    | Ok value -> Some value
-    | Error _ -> None
-
 /// Converts an Option<'T> to a Result<'T, 'E> where the error case is the provided parameter.
 let ofOption error option =
     match option with

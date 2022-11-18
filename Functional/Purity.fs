@@ -9,8 +9,8 @@ let inline withRecursive handler =
     
     value <- handler (lazy (
         if not initialized then
-            invalidOp "Tried to access the recursive value for initialization."
-            
+            invalidOp "Tried to access the recursive value before initialization."
+
         value
     ))
     initialized <- true

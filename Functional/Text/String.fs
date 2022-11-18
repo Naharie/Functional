@@ -147,7 +147,21 @@ let replaceAll (replacements: #seq<string * string>) (string: string) =
         buffer.ToString()
 
 /// Splits a string into substrings based on the characters in the sequence.
-let splitChar (characters: #seq<char>) (string: string) =
+let splitChar (character: char) (string: string) =
+    if isNull string then
+        [||]
+    else
+        string.Split character
+
+/// Splits a string into substrings based on the characters in the sequence and the specified split options.
+let splitCharOptions (options: StringSplitOptions) (character: char) (string: string) =
+    if isNull string then
+        [||]
+    else
+        string.Split (character, options)
+
+/// Splits a string into substrings based on the characters in the sequence.
+let splitChars (characters: #seq<char>) (string: string) =
     if isNull string then
         [||]
     else
@@ -159,7 +173,7 @@ let splitChar (characters: #seq<char>) (string: string) =
             string.Split characters
 
 /// Splits a string into substrings based on the characters in the sequence and the specified split options.
-let splitCharOptions (options: StringSplitOptions) (characters: #seq<char>) (string: string) =
+let splitCharsOptions (options: StringSplitOptions) (characters: #seq<char>) (string: string) =
     if isNull string then
         [||]
     else
@@ -171,7 +185,7 @@ let splitCharOptions (options: StringSplitOptions) (characters: #seq<char>) (str
             string.Split (characters, options)
 
 /// Splits a string into substrings based on the strings in the sequence.
-let split (separators: #seq<string>) (string: string) =
+let splitStrings (separators: #seq<string>) (string: string) =
     if isNull string then
         [||]
     else
@@ -186,7 +200,7 @@ let split (separators: #seq<string>) (string: string) =
             string.Split (separators, StringSplitOptions.None)
 
 /// Splits a string into substrings based on the characters in the sequence and the specified split options.
-let splitOptions (options: StringSplitOptions) (separators: #seq<string>) (string: string) =
+let splitStringsOptions (options: StringSplitOptions) (separators: #seq<string>) (string: string) =
     if isNull string then
         [||]
     else
@@ -196,6 +210,20 @@ let splitOptions (options: StringSplitOptions) (separators: #seq<string>) (strin
             [| string |]
         else
             string.Split (separators, options)
+
+/// Splits a string into substrings based on the strings in the sequence.
+let split (separator: string) (string: string) =
+    if isNull string then
+        [||]
+    else
+        string.Split ([| separator |], StringSplitOptions.None)
+
+/// Splits a string into substrings based on the characters in the sequence and the specified split options.
+let splitOptions (options: StringSplitOptions) (separator: string) (string: string) =
+    if isNull string then
+        [||]
+    else
+        string.Split ([| separator |], options)
 
 /// Splits a string into substrings by taking everything before the given index as the first string, and everything after the given index as the second.
 let splitAt (index: int) (string: string) =
@@ -349,7 +377,7 @@ let tryHead (string: string) =
 /// Indexes into the string. The first character has index 0.
 let item index (string: string) =
     if isNull string then
-        '\x00'
+        nullArg (nameof string)
     elif index < 0 || index > string.Length then
         raise (IndexOutOfRangeException $"{nameof index} must be greater than zero and less than the length of the string.")
     else

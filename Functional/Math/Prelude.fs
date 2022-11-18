@@ -16,6 +16,3 @@ let inline rem n1 n2 = n1 % n2
 let inline (%) n m =
     let r = n % m    
     if r < 0G then r + m else r
-    
-/// Returns true if n % m (Mathematical modulus) is zero.
-let inline (%=) n m = n % m = 0G

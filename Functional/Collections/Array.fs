@@ -7,9 +7,25 @@ open Functional
 open System.Collections
 open System.Collections.Generic
 
-/// Creates an array of arrays with the specified dimensions intialized with the specified function.
+/// Creates an array of arrays with the specified dimensions initialized with the specified function.
 let table inner outer initializer =
     Array.init outer (fun _ -> Array.init inner initializer)
+
+/// Maps the given action over an array of arrays.
+let mapTable action table =
+    table
+    |> Array.map (
+        Array.map action
+    )
+/// Maps the given action over a table, passing in a tuple of the row and column numbers.
+let mapTablei action table =
+    table
+    |> Array.mapi (fun rowNumber row ->
+        row
+        |> Array.map (fun columnNumber ->
+            action (rowNumber, columnNumber)
+        )
+    )
 
 /// Combines map and scan.
 let mapScan action state items =
@@ -68,9 +84,9 @@ let foldWhile folder state array =
             let newState = folder state array.[index]
 
             match newState with
-            | Some state -> 
+            | Done value -> value
+            | Continue state -> 
                 loop state (index + 1)
-            | None -> state
 
     loop state 0
 /// Applies the specified folding function to the array as long as the state is not None.
@@ -82,8 +98,9 @@ let foldBackWhile folder array state =
             let newState = folder (Array.item index array) state
 
             match newState with
-            | Some state -> loop state (index - 1)
-            | None -> state
+            | Done value -> value
+            | Continue state -> 
+                loop state (index - 1)
 
     loop state (Array.length array - 1)
 
@@ -445,3 +462,40 @@ let chunkBy (rule: 't -> bool) (array: 't[]) =
                 loop groups previous (index + 1)
 
     loop [] 0 0
+
+let separateBy (rule: 't -> bool) (array: 't[]) =
+    let group = ResizeArray()
+    
+    [|
+        for item in array do
+            if rule item then
+                yield group.ToArray()
+                yield [| item |]
+                group.Clear()
+            else
+                group.Add item
+                
+        if group.Count > 0 then
+            yield group.ToArray()
+    |]
+
+let collapse (rule: 't -> 't -> 't option) array =
+    if Array.isEmpty array then
+        Array.empty
+    else
+        [|
+            let mutable state = array.[0]
+            let mutable index = 1
+            
+            while index < array.Length do
+                match rule state array.[index] with
+                | Some nextState ->
+                    state <- nextState
+                | None ->
+                    yield state
+                    state <- array.[index]
+                    
+                index <- index + 1
+
+            yield state
+        |]
