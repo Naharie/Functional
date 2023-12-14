@@ -6,9 +6,9 @@ module Functional.Prelude
 // Tuples
 
 /// Groups two values together as a tuple.
-let pair a b = a, b
+let inline pair a b = a, b
 /// Groups three values together as a triple.
-let triple a b c = a, b, c
+let inline triple a b c = a, b, c
 
 /// <summary>
 /// Return the first element of a tuple, <c>fst (a,b) = a</c>.

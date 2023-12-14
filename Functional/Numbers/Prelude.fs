@@ -1,7 +1,10 @@
 [<AutoOpen>]
 module Functional.MathPrelude
 
+open ExtendedNumerics
 open Functional
+
+type bigdecimal = BigDecimal
 
 let inline clamp value min max =
     if value < min then min

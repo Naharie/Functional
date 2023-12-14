@@ -9,13 +9,13 @@ type degrees
 /// Squares the given number.
 let inline square x = x * x
 
-/// Returns the distance betwean two points.
+/// Returns the distance between two points.
 /// Always use distSquared when possible as it is more efficient.
 let inline dist x1 y1 x2 y2 =
     square (x2 - x1) + square (y2 - y1)
     |> float
     |> sqrt
-/// Returns the distance betwean two points squared.
+/// Returns the distance between two points squared.
 let inline distSquared x1 y1 x2 y2 =
     square (x2 - x1) + square (y2 - y1)
     |> float

@@ -12,7 +12,7 @@ let inline FromInt32 number =
         | n when n > 0 ->
             total + LanguagePrimitives.GenericOne
 
-        // Only here to making the compiler happy.
+        // Only here to make the compiler happy.
         | _ -> total
 
     build LanguagePrimitives.GenericZero number
@@ -26,7 +26,7 @@ let inline FromInt64 number =
         | n when n > 0L ->
             total + LanguagePrimitives.GenericOne
 
-        // Only here to making the compiler happy.
+        // Only here to make the compiler happy.
         | _ -> total
 
     build LanguagePrimitives.GenericZero number

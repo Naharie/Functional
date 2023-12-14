@@ -20,6 +20,49 @@ let inline empty<'t, 'kind when 't : comparison and 'kind :> GraphType> = Graph 
 let inline isDirected (graph : Graph<'t, 'k>) =
     GraphInline.IsDirected $ graph
 
+let fromEdges (edges: #seq<Edge<'t, 'kind>>) =
+    let edges = Seq.toArray edges
+    
+    let vertices =
+        edges
+        |> Array.collect (fun (Edge (a, b)) -> [| Vertex a; Vertex b |])
+        |> Set.ofSeq
+
+    Graph (vertices, Set.ofArray edges)
+
+let fromArray (array: 't[][]) =
+    array
+    |> Array.collecti (fun rowIndex row ->
+        row
+        |> Array.collecti (fun columnIndex item ->
+            [|
+                if rowIndex > 0 then
+                    if columnIndex > 0 then
+                        yield Edge (array[rowIndex - 1][columnIndex - 1], item)
+                    
+                    yield Edge (array[rowIndex - 1][columnIndex], item)
+                    
+                    if columnIndex + 1 < row.Length then
+                        yield Edge (array[rowIndex - 1][columnIndex + 1], item)
+                        
+                if columnIndex > 0 then
+                    yield Edge (row[columnIndex - 1], item)
+                if columnIndex + 1 < row.Length then
+                    yield Edge(row[columnIndex + 1], item)
+                    
+                if rowIndex + 1 < array.Length then
+                    if columnIndex > 0 then
+                        yield Edge (array[rowIndex + 1][columnIndex - 1], item)
+                    
+                    yield Edge (array[rowIndex + 1][columnIndex], item)
+                    
+                    if columnIndex + 1 < row.Length then
+                        yield Edge (array[rowIndex + 1][columnIndex + 1], item)
+            |]
+        )
+    )
+    |> fromEdges
+
 /// Returns the edges of the specified graph.
 let getEdges (Graph (_, edges)) = edges
 /// Returns the vertices of the specified graph.
@@ -79,6 +122,29 @@ let getOutgoing (Graph (vertices, edges): Graph<'t, Directed>) =
         map
         |> Map.tryAdd vertex Set.empty
     ) connections
+
+/// Returns a mapping of nodes to a set of nodes that connect to the key node.
+let getConnections (Graph (vertices, edges): Graph<'t, Undirected>) =
+    let connections =
+        edges
+        |> Set.toArray
+        |> Array.groupBy Edge.first
+        |> Array.map (fun (key, group) ->
+            let group =
+                group
+                |> Array.map Edge.second
+                |> Set.ofArray
+        
+            Vertex key, group
+        )
+        |> Map.ofArray
+
+    vertices
+    |> Set.fold (fun map vertex ->
+        map
+        |> Map.tryAdd vertex Set.empty
+    ) connections
+
 
 /// Returns a topological sort of the specified graph.
 /// If the graph is cyclic then the function returns an empty list.
@@ -147,7 +213,7 @@ let a_star heuristic (weight: Vertex<'t> -> Vertex<'t> -> int) start goal (graph
         if BinaryHeap.isEmpty openHeap then
             ValueNone
         else
-            let current = BinaryHeap.min openHeap
+            let current = BinaryHeap.minOrMax openHeap
 
             if current = goal then
                 ValueSome (reconstructPath cameFrom current)
@@ -193,7 +259,7 @@ let a_star heuristic (weight: Vertex<'t> -> Vertex<'t> -> int) start goal (graph
                 search openHeap openSet cameFrom known guess
 
     search
-        (BinaryHeap.singleton (0, start)) Set.empty
+        (BinaryHeap.singleton MinHeap (0, start)) Set.empty
         Map.empty 
         (Map.ofArray [| (start, 0) |])
         (Map.ofArray [| (start, heuristic start) |])

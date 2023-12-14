@@ -1,4 +1,5 @@
-module Functional.PreludeParsing
+[<AutoOpen>]
+module Functional.Parsing
 
 open System
 

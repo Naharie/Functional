@@ -5,9 +5,11 @@ open System.Collections.Generic
 
 type Dictionary<'tkey, 'tvalue> with
     /// <summary>Gets the value associated with the specified key.</summary>
-    /// <exception cref="System.ArgumentNullException">key is null</exception>
     member this.TryFind key =
-        let mutable result = Unchecked.defaultof<'tvalue>
+        if isNull (box key) then
+            None
+        else
+            let mutable result = Unchecked.defaultof<'tvalue>
 
-        if this.TryGetValue (key, &result) then Some result
-        else None
+            if this.TryGetValue (key, &result) then Some result
+            else None

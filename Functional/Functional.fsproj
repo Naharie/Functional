@@ -21,10 +21,10 @@
 
         <Compile Include="Functions\Utilities.fs" />
 
-        <Compile Include="Math\GenericNumber.fs" />
-        <Compile Include="Math\Utilities.fs" />
-        <Compile Include="Math\Binary.fs" />
-        <Compile Include="Math\Prelude.fs" />
+        <Compile Include="Numbers\GenericNumber.fs" />
+        <Compile Include="Numbers\Utilities.fs" />
+        <Compile Include="Numbers\Binary.fs" />
+        <Compile Include="Numbers\Prelude.fs" />
         
         <Compile Include="Text\String.fs" />
         
@@ -54,10 +54,13 @@
         
         <Compile Include="Prelude\Parsing.fs" />
         <Compile Include="Prelude\Errors.fs" />
+        <Compile Include="Prelude\Types.fs" />
         <Compile Include="Prelude\Prelude.fs" />
+        <Folder Include="Data\" />
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="ExtendedNumerics.BigDecimal" Version="2023.1000.3.328" />
       <PackageReference Include="FsHttp" Version="9.1.1" />
     </ItemGroup>
 

@@ -303,7 +303,7 @@ let tryPicki (chooser: int -> 't -> 'u option) (array: 't[]) =
         result
 
 /// For each element apply the given function, concatenate all the results and returned the combined result.
-let collecti mapping array =
+let collecti (mapping: int -> 't -> 'u array) (array: 't array) =
     [|
         let mutable index = 0
         
@@ -313,7 +313,7 @@ let collecti mapping array =
     |]
 
 /// Returns a new collection containing only the elements of the collection for which the given predicate returns true.
-let filteri predicate array =
+let filteri predicate (array: 't array) =
     [|
         let mutable index = 0
         
