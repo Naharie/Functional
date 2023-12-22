@@ -94,6 +94,37 @@ let indexOfComparision (comparision: StringComparison) (substring: string) (stri
     else
         string.IndexOf(substring, comparision)
 
+/// Returns the first index at which one of the specified characters appears or negative one of the characters do not appear within the string.
+let indexOfAnyChar chars (string: string) =
+    let mutable index = 0
+    let mutable found = false
+    
+    while not found && index < string.Length do
+        if chars |> List.exists ((=) string[index]) then
+            found <- true
+        else
+            index <- index + 1
+    
+    if found then index else -1
+
+/// Returns the first index at which one of the specified substrings appears or negative one of the substrings do not appear within the string.
+let indexOfAny (substrings: string list) (string: string) =
+    let mutable index = 0
+    let mutable found = false
+    
+    while not found && index < string.Length do
+        if
+            substrings
+            |> List.exists (fun substring ->
+                index + substring.Length <= string.Length && string.Substring(index, substring.Length) = substring
+            )
+        then
+            found <- true
+        else
+            index <- index + 1
+    
+    if found then index else -1
+
 /// Reports the zero-based index of the last occurrence of the specified substring within the specified string.
 let lastIndexOf (substring: string) (string: string) =
     if isNullOrEmpty substring then

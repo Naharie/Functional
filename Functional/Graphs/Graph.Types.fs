@@ -1,25 +1,17 @@
 namespace Functional.Graphs
 
-open System
-
-#nowarn "44"
-
-// Marker interface
-type GraphType = interface end
-/// Marks a graph as being an undirected graph.
-type Undirected = inherit GraphType
-/// Marks a graph as being a directed graph.
-type Directed = inherit GraphType
-
 /// Represents a vertex in a graph.
-[<Struct>]
 type Vertex<'t> = Vertex of 't
-/// Represents an edge in a graph.
+
+/// Whether an edge is one directional or bidirectional.
 [<Struct>]
-type Edge<'t, 'kind when 'kind :> GraphType> = Edge of 't * 't
+type EdgeKind = Directed | Undirected
+
+/// Represents an edge in a graph.
+type Edge<'t> = Edge of EdgeKind * 't * 't
 
 /// Represents a graph as a set of edges.
-type Graph<'t, 'kind when 'kind :> GraphType and 't : comparison> = Graph of Set<Vertex<'t>> * Set<Edge<'t, 'kind>>
+type Graph<'t when 't : comparison> = Graph of Set<Vertex<'t>> * Set<Edge<'t>>
 
 [<RequireQualifiedAccess>]
 module Vertex =
@@ -31,32 +23,30 @@ module Vertex =
 
 [<RequireQualifiedAccess>]
 module Edge =
-    [<Obsolete>]
-    module EdgeInternal =
-        type IsDirected = IsDirected with
-            static member inline ($) (IsDirected, _: Edge<_, 'k>) =
-                typeof<'k>.FullName = typeof<Directed>.FullName
-            static member inline ($) (IsDirected, _: Edge<_, Directed>) = true
-            static member inline ($) (IsDirected, _: Edge<_, Undirected>) = false
-
     /// Creates an undirected edge from the specified two vertices.
-    let inline undirected (Vertex first) (Vertex second) : Edge<'t, Undirected> = Edge (first, second)
+    let inline undirected (Vertex first) (Vertex second) = Edge (Undirected, first, second)
     /// Creates a directed edge from the specified two vertices.
-    let inline directed (Vertex first) (Vertex second) : Edge<'t, Directed> = Edge (first, second)
+    let inline directed (Vertex first) (Vertex second) = Edge (Directed, first, second)
 
-    let inline isDirected (edge: Edge<_, 'kind>) = EdgeInternal.IsDirected $ edge
+    let inline isDirected (Edge (direction, _, _)) = direction = Directed
 
     /// Returns the first element in the edge.
-    let inline first (Edge (value, _)) = value
+    let inline first (Edge (_, value, _)) = value
     /// Returns the second element in the edge.
-    let inline second (Edge (_, value)) = value
+    let inline second (Edge (_, _, value)) = value
 
 [<AutoOpen>]
-module Prelude =
-    let graph (edges: Edge<'t, 'kind> list) =
+module Prelude =    
+    let graph (edges: Edge<'t> list) =
         let vertices =
             edges
-            |> List.collect (fun (Edge (a, b)) -> [ Vertex a; Vertex b ])
+            |> List.collect (fun (Edge (_, a, b)) -> [ Vertex a; Vertex b ])
             |> Set.ofList
-
+        
         Graph (vertices, Set.ofList edges)
+        
+    /// Constructs an undirected edge for a graph.
+    let inline (<->) (a: 't) (b: 't): Edge<'t> = Edge(Undirected, a, b)
+        
+    /// Constructs an directed edge for a graph
+    let inline (-->) (a: 't) (b: 't): Edge<'t> = Edge(Directed, a, b)

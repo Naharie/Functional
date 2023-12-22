@@ -58,9 +58,14 @@ let inline fromLooseCollection< ^c, ^t when ^c : (member Count: int) and ^c : (m
         (^c : (member Item: int -> ^t) (collection, index))
     )
 
+/// Replaces the specified value 'before' with the value 'after'.
+let replace before after sequence =
+    sequence
+    |> Seq.map (fun value -> if value = before then after else value)
+
 /// Acting as a combination of map and choose, the resulting collection contains the elements from the original sequence for which the replacement function returned none.
 /// If the replacement function returned Some(x) instead, then the value of x replaces the original element from the collection.
-let replace replacement sequence =
+let replaceWith replacement sequence =
     sequence
     |> Seq.map (fun item ->
         replacement item
@@ -389,3 +394,13 @@ let collapse (rule: 't -> 't -> 't option) (sequence: #seq<'t>) =
 
             yield state
     }
+    
+/// Counts the number of items that match the specified rule.
+let count rule (array: 't seq) =
+    let mutable count = 0
+    
+    for item in array do
+        if rule item then
+            count <- count + 1
+    
+    count

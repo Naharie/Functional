@@ -7,6 +7,14 @@ open Functional
 open System.Collections
 open System.Collections.Generic
 
+/// Updates the array in place and returns it again.
+let mapInline mapping (array: 't[]) =
+    for i in 0L..(array.LongLength - 1L) do
+        array.SetValue(mapping ((array.GetValue i) :?> 't), i)
+    
+    array
+    
+
 /// Creates an array of arrays with the specified dimensions initialized with the specified function.
 let table inner outer initializer =
     Array.init outer (fun _ -> Array.init inner initializer)
@@ -60,9 +68,14 @@ let inline fromLooseCollection< ^c, ^t when ^c : (member Count: int) and ^c : (m
         (^c : (member Item: int -> ^t) (collection, index))
     )
 
+/// Replaces the specified value 'before' with the value 'after'.
+let replace before after array =
+    array
+    |> Array.map (fun value -> if value = before then after else value)
+
 /// Acting as a combination of map and choose, the resulting collection contains the elements from the original array for which the replacement function returned none.
 /// If the replacement function returned Some(x) instead, then the value of x replaces the original element from the collection.
-let replace replacement array =
+let replaceWith replacement array =
     array
     |> Array.map (fun item ->
         replacement item
@@ -331,8 +344,9 @@ let choosei predicate array =
         for item in array do
             match predicate index item with
             | Some value -> yield value
-            | None ->
-                index <- index + 1
+            | None -> ()
+            
+            index <- index + 1
     |]
 
 /// Removes all instances of the specified item from the array.
@@ -425,23 +439,20 @@ let pairs array =
 
 /// Splits the input array based on the specified rule function.
 /// The item that is split on is not included in the results.
-let splitBy (rule: 't -> bool) (array: 't[]) =
-    let rec loop groups previous index =
-        if index >= array.Length then
-            if index > previous then
-                List.rev (array.[previous..index - 1] :: groups)
-                |> List.toArray
-            else
-                groups
-                |> List.rev
-                |> List.toArray
-        else
-            if rule array.[index] then
-                loop (array.[previous..index - 1] :: groups) (index + 1) (index + 1)
-            else
-                loop groups previous (index + 1)
+let splitBy (rule: 't -> bool) (list: 't[]) =
+    [|
+        let buffer = ResizeArray()
 
-    loop [] 0 0
+        for item in list do
+            if rule item then
+                yield buffer.ToArray()
+                buffer.Clear()
+            else
+                buffer.Add item
+
+        if buffer.Count > 0 then 
+            yield buffer.ToArray()
+    |]
 
 /// Splits the input array based on the specified rule function.
 /// The item that is split on is included in the results as the first item of each section.
@@ -499,3 +510,13 @@ let collapse (rule: 't -> 't -> 't option) array =
 
             yield state
         |]
+        
+/// Counts the number of items that match the specified rule.
+let count rule (array: 't[]) =
+    let mutable count = 0
+    
+    for item in array do
+        if rule item then
+            count <- count + 1
+    
+    count

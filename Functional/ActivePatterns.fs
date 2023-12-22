@@ -1,6 +1,8 @@
 ﻿[<AutoOpen>]
 module Functional.ActivePatterns
 
+open System.Collections.Generic
+
 /// Returns the specified default value if the optional value is None.
 let (|Default|) ``default value`` ``optional value`` =
     Option.defaultValue ``default value`` ``optional value``

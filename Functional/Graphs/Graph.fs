@@ -4,64 +4,21 @@ module Functional.Graphs.Graph
 open System
 open Functional
 
-#nowarn "44"
+let inline empty<'t when 't : comparison> = Graph (Set.empty, Set.empty): Graph<'t>
 
-[<Obsolete>]
-module GraphInline =
-    type IsDirected = | IsDirected
-    with
-        static member inline ($) (IsDirected, _: Graph<_, 'k>) =
-            typeof<'k>.FullName = typeof<Directed>.FullName
-        static member inline ($) (IsDirected, _: Graph<_, Directed>) = true
-        static member inline ($) (IsDirected, _: Graph<_, Undirected>) = false
+let isDirected (Graph (_, edges)) =
+    edges
+    |> Set.forall (fun (Edge (direction, _, _)) -> direction = Directed)
 
-let inline empty<'t, 'kind when 't : comparison and 'kind :> GraphType> = Graph (Set.empty, Set.empty) : Graph<'t, 'kind>
-
-let inline isDirected (graph : Graph<'t, 'k>) =
-    GraphInline.IsDirected $ graph
-
-let fromEdges (edges: #seq<Edge<'t, 'kind>>) =
+let fromEdges (edges: #seq<Edge<'t>>) =
     let edges = Seq.toArray edges
     
     let vertices =
         edges
-        |> Array.collect (fun (Edge (a, b)) -> [| Vertex a; Vertex b |])
+        |> Array.collect (fun (Edge (_, a, b)) -> [| Vertex a; Vertex b |])
         |> Set.ofSeq
 
     Graph (vertices, Set.ofArray edges)
-
-let fromArray (array: 't[][]) =
-    array
-    |> Array.collecti (fun rowIndex row ->
-        row
-        |> Array.collecti (fun columnIndex item ->
-            [|
-                if rowIndex > 0 then
-                    if columnIndex > 0 then
-                        yield Edge (array[rowIndex - 1][columnIndex - 1], item)
-                    
-                    yield Edge (array[rowIndex - 1][columnIndex], item)
-                    
-                    if columnIndex + 1 < row.Length then
-                        yield Edge (array[rowIndex - 1][columnIndex + 1], item)
-                        
-                if columnIndex > 0 then
-                    yield Edge (row[columnIndex - 1], item)
-                if columnIndex + 1 < row.Length then
-                    yield Edge(row[columnIndex + 1], item)
-                    
-                if rowIndex + 1 < array.Length then
-                    if columnIndex > 0 then
-                        yield Edge (array[rowIndex + 1][columnIndex - 1], item)
-                    
-                    yield Edge (array[rowIndex + 1][columnIndex], item)
-                    
-                    if columnIndex + 1 < row.Length then
-                        yield Edge (array[rowIndex + 1][columnIndex + 1], item)
-            |]
-        )
-    )
-    |> fromEdges
 
 /// Returns the edges of the specified graph.
 let getEdges (Graph (_, edges)) = edges
@@ -69,86 +26,92 @@ let getEdges (Graph (_, edges)) = edges
 let getVertices (Graph (vertices, _)) = vertices
 
 /// Converts an undirected graph to a directed graph.
-/// The type is left open and generic so that the function can be used as a way of ensuring
-/// that an unknown graph is safely cast as a directed graph.
-let toDirect (Graph (vertices, edges): Graph<'t, _>) =
+let toDirect (Graph (vertices, edges): Graph<'t>) =
     let newEdges =
         edges
-        |> Set.map (fun (Edge (a, b)) -> Edge (b, a))
+        |> Set.map (
+            function
+            | Edge (Directed, a, b) -> Edge(Directed, a, b)
+            | Edge (Undirected, a, b) -> Edge(Directed, b, a)
+        )
         |> Set.union edges
 
     Graph (vertices, newEdges)
 
 /// Returns a mapping of nodes to a set of nodes that connect to the key node.
-let getIncoming (Graph (vertices, edges): Graph<'t, Directed>) =
+let getIncoming (Graph (vertices, edges): Graph<'t>) =
     let connections =
         edges
         |> Set.toArray
-        |> Array.groupBy Edge.second
-        |> Array.map (fun (key, group) ->
-            let group =
-                group
-                |> Array.map Edge.first
-                |> Set.ofArray
-        
-            Vertex key, group
-        )
-        |> Map.ofArray
+        |> Array.fold (fun (mapping: Map<'t, Set<'t>>) (Edge (direction, a, b)) ->
+            let addLink a b mapping =
+                mapping
+                |> Map.tryFind b
+                |> Option.defaultValue Set.empty
+                |> Set.add a
+                |> applyACB Map.add b mapping
+            
+            match direction with
+            | Directed ->
+                addLink a b mapping
+                
+            | Undirected ->
+                mapping
+                |> addLink a b
+                |> addLink b a
+        ) Map.empty
 
     vertices
-    |> Set.fold (fun map vertex ->
+    |> Set.fold (fun map (Vertex vertex) ->
         map
         |> Map.tryAdd vertex Set.empty
     ) connections
 
 /// Returns a mapping of nodes to their neighbors.
-let getOutgoing (Graph (vertices, edges): Graph<'t, Directed>) =
+let getOutgoing (Graph (vertices, edges): Graph<'t>) =
     let connections =
         edges
         |> Set.toArray
-        |> Array.groupBy Edge.first
-        |> Array.map (fun (key, group) ->
-            let group =
-                group
-                |> Array.map Edge.second
-                |> Set.ofArray
-        
-            Vertex key, group
-        )
-        |> Map.ofArray
+        |> Array.fold (fun (mapping: Map<'t, Set<'t>>) (Edge (direction, a, b)) ->
+            let addLink a b mapping =
+                mapping
+                |> Map.tryFind a
+                |> Option.defaultValue Set.empty
+                |> Set.add b
+                |> applyACB Map.add a mapping
+            
+            match direction with
+            | Directed ->
+                addLink a b mapping
+                
+            | Undirected ->
+                mapping
+                |> addLink a b
+                |> addLink b a
+        ) Map.empty
 
     vertices
-    |> Set.fold (fun map vertex ->
+    |> Set.fold (fun map (Vertex vertex) ->
         map
         |> Map.tryAdd vertex Set.empty
     ) connections
 
-/// Returns a mapping of nodes to a set of nodes that connect to the key node.
-let getConnections (Graph (vertices, edges): Graph<'t, Undirected>) =
-    let connections =
-        edges
-        |> Set.toArray
-        |> Array.groupBy Edge.first
-        |> Array.map (fun (key, group) ->
-            let group =
-                group
-                |> Array.map Edge.second
-                |> Set.ofArray
+let getAdjacentVertices(Graph (_, edges), (Vertex vertex)) =
+    edges
+    |> Set.toList
+    |> List.choose (fun (Edge (direction, a, b)) ->
+        match direction with
+        | Directed when a = vertex -> Some b
+        | Directed -> None
         
-            Vertex key, group
-        )
-        |> Map.ofArray
-
-    vertices
-    |> Set.fold (fun map vertex ->
-        map
-        |> Map.tryAdd vertex Set.empty
-    ) connections
-
+        | Undirected when a = vertex -> Some b
+        | Undirected when b = vertex -> Some a
+        | Undirected -> None
+    )
 
 /// Returns a topological sort of the specified graph.
 /// If the graph is cyclic then the function returns an empty list.
-let topologicalSort (Graph (vertices, _) as graph : Graph<'t, Directed>) =
+let topologicalSort (Graph (vertices, _) as graph : Graph<'t>) =
     let connections = getIncoming graph
    
     let rec gather (sort: 't[] list) gathered (vertices: 't[]) =
@@ -161,7 +124,7 @@ let topologicalSort (Graph (vertices, _) as graph : Graph<'t, Directed>) =
                 |> Array.partition (fun vertex ->
                     let links =
                         connections
-                        |> Map.tryFind (Vertex vertex)
+                        |> Map.tryFind vertex
                         |> Option.defaultValue Set.empty
 
                     Set.isSubset links gathered
@@ -177,7 +140,7 @@ let topologicalSort (Graph (vertices, _) as graph : Graph<'t, Directed>) =
     let roots, vertices =
         vertices
         |> Set.toArray
-        |> Array.partition (fun vertex ->
+        |> Array.partition (fun (Vertex vertex) ->
             connections
             |> Map.containsKey vertex
             |> not
@@ -195,8 +158,8 @@ let topologicalSort (Graph (vertices, _) as graph : Graph<'t, Directed>) =
         |> Array.collect id
 
 // Shamelessly stolen and ported from wikipedia.
-/// Computes the shortest possible path from vertex in the graph to another vertex in the graph.
-let a_star heuristic (weight: Vertex<'t> -> Vertex<'t> -> int) start goal (graph: Graph<'t, Directed>) =
+/// Computes the shortest possible path from one vertex in the graph to another vertex in the graph.
+let a_star heuristic (weight: Vertex<'t> -> Vertex<'t> -> int) start goal (graph: Graph<'t>) =
     let neighborMap = getOutgoing graph
 
     let reconstructPath cameFrom current =
@@ -221,7 +184,7 @@ let a_star heuristic (weight: Vertex<'t> -> Vertex<'t> -> int) start goal (graph
                 let openHeap = BinaryHeap.removeMin openHeap
                 let openSet = Set.remove current openSet
 
-                let neighbors = neighborMap |> Map.find current
+                let neighbors = neighborMap |> Map.find (Vertex.value current)
 
                 let openHeap, openSet, cameFrom, known, guess =
                     neighbors

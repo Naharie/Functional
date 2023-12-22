@@ -61,9 +61,14 @@ let inline fromLooseCollection< ^c, ^t when ^c : (member Count: int) and ^c : (m
         (^c : (member Item: int -> ^t) (collection, index))
     )
 
+/// Replaces the specified value 'before' with the value 'after'.
+let replace before after list =
+    list
+    |> List.map (fun value -> if value = before then after else value)
+
 /// Acting as a combination of map and choose, the resulting collection contains the elements from the original list for which the replacement function returned none.
 /// If the replacement function returned Some(x) instead, then the value of x replaces the original element from the collection.
-let replace replacement list =
+let replaceWith replacement list =
     list
     |> List.map (fun item ->
         replacement item
@@ -362,20 +367,19 @@ let pairs list =
 /// Splits the input list based on the specified rule function.
 /// The item that is split on is not included in the results.
 let splitBy (rule: 't -> bool) (list: 't list) =
-    let rec loop chunks buffer remaining =
-        match remaining with
-        | [] ->
-            match buffer with
-            | [] -> chunks
-            | _ -> List.rev (List.rev buffer :: chunks)
+    [
+        let buffer = ResizeArray()
 
-        | item :: rest ->
+        for item in list do
             if rule item then
-                loop (List.rev buffer :: chunks) [] rest
+                yield buffer.ToArray() |> List.ofArray
+                buffer.Clear()
             else
-                loop chunks (item :: buffer) rest
+                buffer.Add item
 
-    loop [] [] list
+        if buffer.Count > 0 then 
+            yield buffer.ToArray() |> List.ofArray
+    ]
 
 /// Splits the input array based on the specified rule function.
 /// The item that is split on is included in the results as the first item of each section.
@@ -431,3 +435,13 @@ let collapse (rule: 't -> 't -> 't option) list =
             
             yield state
         ]
+        
+/// Counts the number of items that match the specified rule.
+let count rule (array: 't list) =
+    let mutable count = 0
+    
+    for item in array do
+        if rule item then
+            count <- count + 1
+    
+    count
