@@ -4,6 +4,7 @@
         <TargetFramework>net7.0</TargetFramework>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <WarnOn>3390;$(WarnOn)</WarnOn>
+        <LangVersion>preview</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -21,10 +22,10 @@
         <Compile Include="Functions\Utilities.fs" />
 
         <Compile Include="Numbers\GenericNumber.fs" />
-        <Compile Include="Numbers\Utilities.fs" />
         <Compile Include="Numbers\Binary.fs" />
+        <Compile Include="Numbers\Math.fs" />
         <Compile Include="Numbers\Prelude.fs" />
-        
+
         <Compile Include="Text\String.fs" />
         
         <Compile Include="Collections\CollectionTypes.fs" />
@@ -39,7 +40,7 @@
         <Compile Include="Collections\FingerTree.fs" />
         <Compile Include="Collections\Queue.fs" />
         <Compile Include="Collections\Dequeue.fs" />
-        
+
         <Compile Include="ComputationBuilders\ComputationBuilders.fs" />
         <Compile Include="ComputationBuilders\Maybe.fs" />
         <Compile Include="ComputationBuilders\Result.fs" />
@@ -50,8 +51,10 @@
         
         <Compile Include="Parsing\Regex.fs" />
         <Compile Include="Parsing\Scanf.fs" />
+        <Compile Include="Parsing\ParseFunctions.fs" />
         
-        <Compile Include="Prelude\Parsing.fs" />
+        <Compile Include="Networking\Networking.fs" />
+
         <Compile Include="Prelude\Errors.fs" />
         <Compile Include="Prelude\Types.fs" />
         <Compile Include="Prelude\Prelude.fs" />
@@ -61,7 +64,7 @@
 
     <ItemGroup>
       <PackageReference Include="ExtendedNumerics.BigDecimal" Version="2023.1000.3.328" />
-      <PackageReference Include="FsHttp" Version="9.1.1" />
+      <PackageReference Include="FsHttp" Version="14.1.0" />
     </ItemGroup>
 
 </Project>

@@ -437,14 +437,51 @@ let pairs array =
         )
     )
 
-/// Splits the input array based on the specified rule function.
+/// Splits the input sequence based on the specified rule function.
 /// The item that is split on is not included in the results.
-let splitBy (rule: 't -> bool) (list: 't[]) =
+let splitBy (rule: 't -> bool) (sequence: 't[]) =
+    [
+        let buffer = ResizeArray()
+
+        for item in sequence do
+            if rule item then
+                yield buffer.ToArray()
+                buffer.Clear()
+            else
+                buffer.Add item
+
+        if buffer.Count > 0 then 
+            yield buffer.ToArray()
+    ]
+
+/// Splits the input sequence based on the specified rule function.
+/// The item that is split on is included in the results as the first item of each section.
+let chunkBy (rule: 't -> bool) (sequence: 't[]) =
+    [
+        let buffer = ResizeArray()
+
+        for item in sequence do
+
+            if rule item then
+                yield buffer.ToArray()
+                buffer.Clear()
+                buffer.Add item
+            else
+                buffer.Add item
+
+        if buffer.Count > 0 then 
+            yield buffer.ToArray()
+    ]
+
+/// Splits the input sequence based on the specified rule function.
+/// The item that is split on is included in the results as the last item of each section.
+let chunkBy2 (rule: 't -> bool) (sequence: 't[]) =
     [|
         let buffer = ResizeArray()
 
-        for item in list do
+        for item in sequence do
             if rule item then
+                buffer.Add item
                 yield buffer.ToArray()
                 buffer.Clear()
             else
@@ -454,41 +491,24 @@ let splitBy (rule: 't -> bool) (list: 't[]) =
             yield buffer.ToArray()
     |]
 
-/// Splits the input array based on the specified rule function.
-/// The item that is split on is included in the results as the first item of each section.
-let chunkBy (rule: 't -> bool) (array: 't[]) =
-    let rec loop groups previous index =
-        if index >= array.Length then
-            if index > previous then
-                List.rev (array.[previous..index] :: groups)
-                |> List.toArray
-            else
-                groups
-                |> List.rev
-                |> List.toArray
-        else
-            if rule array.[index] then
-                loop (array.[previous..index - 1] :: groups) index (index + 1)
-            else
-                loop groups previous (index + 1)
-
-    loop [] 0 0
-
-let separateBy (rule: 't -> bool) (array: 't[]) =
+/// Splits the input sequence based on the specified rule function.
+/// The item that is split on is included in the results as its own group.
+let separateBy (rule: 't -> bool) (sequence: 't[]) =
     let group = ResizeArray()
     
     [|
-        for item in array do
+        for item in sequence do
             if rule item then
                 yield group.ToArray()
                 yield [| item |]
                 group.Clear()
-            else
-                group.Add item
-                
+             else
+                 group.Add item
+
         if group.Count > 0 then
             yield group.ToArray()
     |]
+    
 
 let collapse (rule: 't -> 't -> 't option) array =
     if Array.isEmpty array then

@@ -324,12 +324,9 @@ let pairs sequence =
 /// The item that is split on is not included in the results.
 let splitBy (rule: 't -> bool) (sequence: #seq<'t>) =
     seq {
-        let enumerator = sequence.GetEnumerator()
         let buffer = ResizeArray()
 
-        while enumerator.MoveNext() do
-            let item = enumerator.Current
-
+        for item in sequence do
             if rule item then
                 yield buffer.ToArray() |> Seq.ofArray
                 buffer.Clear()
@@ -340,15 +337,13 @@ let splitBy (rule: 't -> bool) (sequence: #seq<'t>) =
             yield buffer.ToArray() |> Seq.ofArray
     }
 
-/// Splits the input array based on the specified rule function.
+/// Splits the input sequence based on the specified rule function.
 /// The item that is split on is included in the results as the first item of each section.
 let chunkBy (rule: 't -> bool) (sequence: #seq<'t>) =
     seq {
-        let enumerator = sequence.GetEnumerator()
         let buffer = ResizeArray()
 
-        while enumerator.MoveNext() do
-            let item = enumerator.Current
+        for item in sequence do
 
             if rule item then
                 yield buffer.ToArray() |> Seq.ofArray
@@ -361,6 +356,27 @@ let chunkBy (rule: 't -> bool) (sequence: #seq<'t>) =
             yield buffer.ToArray() |> Seq.ofArray
     }
 
+/// Splits the input sequence based on the specified rule function.
+/// The item that is split on is included in the results as the last item of each section.
+let chunkBy2 (rule: 't -> bool) (sequence: #seq<'t>) =
+    seq {
+        let buffer = ResizeArray()
+
+        for item in sequence do
+            if rule item then
+                buffer.Add item
+                yield buffer.ToArray() |> Seq.ofArray
+                buffer.Clear()
+            else
+                buffer.Add item
+
+        if buffer.Count > 0 then 
+            yield buffer.ToArray() |> Seq.ofArray
+    }
+
+
+/// Splits the input sequence based on the specified rule function.
+/// The item that is split on is included in the results as its own group.
 let separateBy (rule: 't -> bool) (sequence: seq<'t>) =
     let group = ResizeArray()
     

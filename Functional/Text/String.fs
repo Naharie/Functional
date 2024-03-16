@@ -276,7 +276,7 @@ let insertAt (index: int) (value: string) (string: string) =
         builder
             .Append(string.Substring(0, index))
             .Append(value)
-            .Append(string.Substring(index))
+            .Append( string.Substring(index))
             |> ignore
             
         builder.ToString()
@@ -420,3 +420,13 @@ let tryItem index (string: string) =
         None
     else
         Some string.[index]
+      
+/// Reverses the specified string.  
+let rev (text: string) =
+    toCharArray text
+    |> Array.rev
+    |> String
+
+/// Determines if the string is a palindrome or not.
+/// (That is, whether string = rev string)
+let isPalindrome (text: string) = text = rev text

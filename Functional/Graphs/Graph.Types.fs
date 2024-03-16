@@ -11,7 +11,7 @@ type EdgeKind = Directed | Undirected
 type Edge<'t> = Edge of EdgeKind * 't * 't
 
 /// Represents a graph as a set of edges.
-type Graph<'t when 't : comparison> = Graph of Set<Vertex<'t>> * Set<Edge<'t>>
+type Graph<'t when 't : comparison> = private Graph of Set<Vertex<'t>> * Set<Edge<'t>>
 
 [<RequireQualifiedAccess>]
 module Vertex =

@@ -4,7 +4,7 @@ module Functional.Graphs.Graph
 open System
 open Functional
 
-let inline empty<'t when 't : comparison> = Graph (Set.empty, Set.empty): Graph<'t>
+let empty<'t when 't : comparison> = Graph (Set.empty, Set.empty): Graph<'t>
 
 let isDirected (Graph (_, edges)) =
     edges
@@ -96,6 +96,7 @@ let getOutgoing (Graph (vertices, edges): Graph<'t>) =
         |> Map.tryAdd vertex Set.empty
     ) connections
 
+/// Returns a list of all vertices that can be reached from the specified vertex.
 let getAdjacentVertices(Graph (_, edges), (Vertex vertex)) =
     edges
     |> Set.toList

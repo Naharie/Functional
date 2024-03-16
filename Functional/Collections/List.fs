@@ -364,13 +364,13 @@ let pairs list =
             outerIndex <- outerIndex + 1
     ]
 
-/// Splits the input list based on the specified rule function.
+/// Splits the input sequence based on the specified rule function.
 /// The item that is split on is not included in the results.
-let splitBy (rule: 't -> bool) (list: 't list) =
+let splitBy (rule: 't -> bool) (sequence: 't list) =
     [
         let buffer = ResizeArray()
 
-        for item in list do
+        for item in sequence do
             if rule item then
                 yield buffer.ToArray() |> List.ofArray
                 buffer.Clear()
@@ -381,38 +381,59 @@ let splitBy (rule: 't -> bool) (list: 't list) =
             yield buffer.ToArray() |> List.ofArray
     ]
 
-/// Splits the input array based on the specified rule function.
+/// Splits the input sequence based on the specified rule function.
 /// The item that is split on is included in the results as the first item of each section.
-let chunkBy (rule: 't -> bool) (list: 't list) =
-    let rec loop chunks buffer remaining =
-        match remaining with
-        | [] ->
-            match buffer with
-            | [] -> chunks
-            | _ -> List.rev (List.rev buffer :: chunks)
+let chunkBy (rule: 't -> bool) (sequence: 't list) =
+    [
+        let buffer = ResizeArray()
 
-        | item :: rest ->
+        for item in sequence do
+
             if rule item then
-                loop (List.rev buffer :: chunks) [ item ] rest
+                yield buffer.ToArray() |> List.ofArray
+                buffer.Clear()
+                buffer.Add item
             else
-                loop chunks (item :: buffer) rest
+                buffer.Add item
 
-    loop [] [] list
+        if buffer.Count > 0 then 
+            yield buffer.ToArray() |> List.ofArray
+    ]
 
-let separateBy (rule: 't -> bool) (list: 't list) =
+/// Splits the input sequence based on the specified rule function.
+/// The item that is split on is included in the results as the last item of each section.
+let chunkBy2 (rule: 't -> bool) (sequence: 't list) =
+    [
+        let buffer = ResizeArray()
+
+        for item in sequence do
+            if rule item then
+                buffer.Add item
+                yield buffer.ToArray() |> List.ofArray
+                buffer.Clear()
+            else
+                buffer.Add item
+
+        if buffer.Count > 0 then 
+            yield buffer.ToArray() |> List.ofArray
+    ]
+
+/// Splits the input sequence based on the specified rule function.
+/// The item that is split on is included in the results as its own group.
+let separateBy (rule: 't -> bool) (sequence: 't list) =
     let group = ResizeArray()
     
     [
-        for item in list do
+        for item in sequence do
             if rule item then
-                yield Seq.toList group
+                yield group.ToArray() |> List.ofArray
                 yield [ item ]
                 group.Clear()
             else
                 group.Add item
-                
+
         if group.Count > 0 then
-            yield Seq.toList group
+            yield group.ToArray() |> List.ofArray
     ]
     
 let collapse (rule: 't -> 't -> 't option) list =
