@@ -7,8 +7,8 @@ open System
 open Functional.ComputationBuilders
 
 type ResultBuilder () =
-    member __.Return value = Value (Ok value)
-    member __.ReturnFrom value = Value value
+    member _.Return value = Value (Ok value)
+    member _.ReturnFrom value = Value value
 
     member this.Bind (value, func) =
         match value with
@@ -25,8 +25,8 @@ type ResultBuilder () =
             | Result.Error _ -> Value value
         )
 
-    member __.Delay func = Future func
-    member __.Zero () = Value (Ok ())
+    member _.Delay func = Future func
+    member _.Zero () = Value (Ok ())
 
     member this.Combine (f1: Computation<_>, f2) =
         this.Bind (f1, fun _ -> f2)

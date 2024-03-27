@@ -60,9 +60,9 @@ let private getChunks (format: string) =
                     | 'b' -> ParserType.Boolean
                     | 's' -> ParserType.String
                     | 'c' -> ParserType.Character
-                    | _ -> failwithf "Unkown parser: %%%c" f
+                    | _ -> failwithf "Unknown parser: %%%c" f
 
-                let chunk = Parser (parserType, parsers.[f])
+                let chunk = Parser (parserType, parsers[f])
 
                 loop (chunk :: chunks) [] format
             else
@@ -94,9 +94,9 @@ let removeExtraWhitespace (text: string) =
         let builder = StringBuilder text.Length
 
         for index in 0..text.Length - 1 do
-            let character = text.[index]
+            let character = text[index]
 
-            if index = 0 || character <> ' ' || (character = ' ' && text.[index - 1] <> ' ') then
+            if index = 0 || character <> ' ' || (character = ' ' && text[index - 1] <> ' ') then
                 builder.Append character |> ignore
 
         string builder

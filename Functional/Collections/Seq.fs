@@ -295,7 +295,7 @@ let insertions x items =
                 x
             else
                 let offsetIndex = if index < insertIndex then index else index - 1
-                items.[offsetIndex]
+                items[offsetIndex]
         )
     )
 

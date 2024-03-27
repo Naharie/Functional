@@ -136,7 +136,7 @@ let topologicalSort (Graph (vertices, _) as graph : Graph<'t>) =
             else
                 gather (next :: sort) (Set.union gathered (Set.ofArray next)) remaining
 
-    /// The nodes which are not linked to by other nodes.
+    /// The root nodes; nodes which are not linked to by other nodes.
     /// In other words, those nodes that have no dependencies.
     let roots, vertices =
         vertices
@@ -182,7 +182,7 @@ let a_star heuristic (weight: Vertex<'t> -> Vertex<'t> -> int) start goal (graph
             if current = goal then
                 ValueSome (reconstructPath cameFrom current)
             else
-                let openHeap = BinaryHeap.removeMin openHeap
+                let openHeap = BinaryHeap.removeMinOrMax openHeap
                 let openSet = Set.remove current openSet
 
                 let neighbors = neighborMap |> Map.find (Vertex.value current)

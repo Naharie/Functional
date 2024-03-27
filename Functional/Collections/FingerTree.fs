@@ -606,7 +606,7 @@ module FingerTree =
         let result = Array.zeroCreate (size tree)
 
         fold (fun index element ->
-            result.[index] <- element
+            result[index] <- element
             index + 1
         ) 0 tree
         |> ignore

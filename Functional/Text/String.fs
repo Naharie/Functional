@@ -397,13 +397,13 @@ let head (string: string) =
     else if string = "" then
         invalidArg (nameof string) "The input string was empty."
     else
-        string.[0]
+        string[0]
 
 /// Returns the first character of the string, or None if the string is null or empty.
 let tryHead (string: string) =
     match string with
     | null | "" -> None
-    | _ -> Some string.[0]
+    | _ -> Some string[0]
 
 /// Indexes into the string. The first character has index 0.
 let item index (string: string) =
@@ -412,14 +412,14 @@ let item index (string: string) =
     elif index < 0 || index > string.Length then
         raise (IndexOutOfRangeException $"{nameof index} must be greater than zero and less than the length of the string.")
     else
-        string.[index]
+        string[index]
 
 /// <summary>Tries to find the nth character in the string. Returns <c>None</c> if index is negative or the string does not contain enough characters.</summary>
 let tryItem index (string: string) =
     if isNull string || index < 0 || index >= string.Length then
         None
     else
-        Some string.[index]
+        Some string[index]
       
 /// Reverses the specified string.  
 let rev (text: string) =

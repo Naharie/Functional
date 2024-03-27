@@ -85,7 +85,7 @@ let replaceWith replacement array =
 /// If the index is out of range, then the operation does nothing.
 let updateAt index value array =
     let result = Array.copy array
-    result.[index] <- value
+    result[index] <- value
     result
 
 /// Applies the specified folding function to the array as long as the state is not None.
@@ -94,7 +94,7 @@ let foldWhile folder state array =
         if index >= Array.length array then
             state
         else
-            let newState = folder state array.[index]
+            let newState = folder state array[index]
 
             match newState with
             | Done value -> value
@@ -123,7 +123,7 @@ let tryFold folder state array =
         if index >= Array.length array then
             Some state
         else
-            let newState = folder state array.[index]
+            let newState = folder state array[index]
 
             match newState with
             | Some state -> loop state (index + 1)
@@ -165,9 +165,9 @@ let threshBack folder array state =
     let mask = BitArray length
 
     for index in length - 1..-1..0 do
-        let keep, newState = folder array.[index]
+        let keep, newState = folder array[index]
         state <- newState
-        mask.[index] <- keep
+        mask[index] <- keep
 
     let filtered =
         let mutable index = -1
@@ -175,7 +175,7 @@ let threshBack folder array state =
         array
         |> Array.filter (fun _ ->
             index <- index + 1
-            mask.[index]
+            mask[index]
         )
 
     filtered, state
@@ -201,9 +201,9 @@ let winnowBack folder (array: 't[]) (state: 'state) =
     let mask = Array.zeroCreate array.Length
 
     for index in length - 1..-1..0 do
-        let result, newState = folder array.[index]
+        let result, newState = folder array[index]
         state <- newState
-        mask.[index] <- result
+        mask[index] <- result
 
     (Array.choose id mask), state
 
@@ -214,7 +214,7 @@ let findi predicate (array: 't[]) =
     let mutable go = true
     
     while index < array.Length && go do
-        if predicate index array.[index] then
+        if predicate index array[index] then
             go <- false
         else
             index <- index + 1
@@ -222,7 +222,7 @@ let findi predicate (array: 't[]) =
     if index = array.Length then
         raise (KeyNotFoundException "An element matching the predicate was not found in the array.")
     else
-        array.[index]
+        array[index]
 
 /// Returns the last element for which the given predicate returns "true".
 /// If there is no such element then a KeyNotFoundException is raised instead.
@@ -231,7 +231,7 @@ let findBacki predicate (array: 't[]) =
     let mutable go = true
     
     while index > -1 && go do
-        if predicate index array.[index] then
+        if predicate index array[index] then
             go <- false
         else
             index <- index - 1
@@ -239,7 +239,7 @@ let findBacki predicate (array: 't[]) =
     if index = -1 then
         raise (KeyNotFoundException "An element matching the predicate was not found in the array.")
     else
-        array.[index]
+        array[index]
 
 /// Returns the first element for which the given predicate returns "true".
 /// If there is no such element then None is returned instead.
@@ -248,7 +248,7 @@ let tryFindi predicate (array: 't[]) =
     let mutable go = true
     
     while index < array.Length && go do
-        if predicate index array.[index] then
+        if predicate index array[index] then
             go <- false
         else
             index <- index + 1
@@ -256,7 +256,7 @@ let tryFindi predicate (array: 't[]) =
     if index = array.Length then
         None
     else
-        Some array.[index]
+        Some array[index]
 
 /// Returns the last element for which the given predicate returns "true".
 /// If there is no such element then None is returned instead.
@@ -265,7 +265,7 @@ let tryFindBacki predicate (array: 't[]) =
     let mutable go = true
     
     while index > -1 && go do
-        if predicate index array.[index] then
+        if predicate index array[index] then
             go <- false
         else
             index <- index - 1
@@ -273,7 +273,7 @@ let tryFindBacki predicate (array: 't[]) =
     if index = -1 then
         None
     else
-        Some array.[index]
+        Some array[index]
 
 /// Returns the first element for which the given predicate returns Some x.
 /// If there is no such element then a KeyNotFoundException is raised instead.
@@ -283,7 +283,7 @@ let picki (chooser: int -> 't -> 'u option) (array: 't[]) =
     let mutable result = Unchecked.defaultof<'u>
     
     while index < array.Length && go do
-        match chooser index array.[index] with
+        match chooser index array[index] with
         | Some value ->
             result <- value
             go <- false
@@ -303,7 +303,7 @@ let tryPicki (chooser: int -> 't -> 'u option) (array: 't[]) =
     let mutable result = None
     
     while index < array.Length && go do
-        match chooser index array.[index] with
+        match chooser index array[index] with
         | Some value ->
             result <- Some value
             go <- false
@@ -383,7 +383,7 @@ let insertions x items =
                 x
             else
                 let offsetIndex = if index < insertIndex then index else index - 1
-                items.[offsetIndex]
+                items[offsetIndex]
         )
     )
 
@@ -394,9 +394,9 @@ let swapInline a b items =
     let length = Array.length items
 
     if a >= 0 && a < length && b >= 0 && b < length then
-        let temp = items.[a]
-        items.[a] <- items.[b]
-        items.[b] <- temp
+        let temp = items[a]
+        items[a] <- items[b]
+        items[b] <- temp
 
     items
 /// Swaps the specified two items of the array.
@@ -515,16 +515,16 @@ let collapse (rule: 't -> 't -> 't option) array =
         Array.empty
     else
         [|
-            let mutable state = array.[0]
+            let mutable state = array[0]
             let mutable index = 1
             
             while index < array.Length do
-                match rule state array.[index] with
+                match rule state array[index] with
                 | Some nextState ->
                     state <- nextState
                 | None ->
                     yield state
-                    state <- array.[index]
+                    state <- array[index]
                     
                 index <- index + 1
 

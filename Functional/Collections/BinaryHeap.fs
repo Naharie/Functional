@@ -153,7 +153,7 @@ module BinaryHeap =
     /// Returns the first item in order, whether that be the minimum or the maximum as defined by the heap kind.
     let minOrMax heap =
         match heap.heap with
-        | Blank -> invalidOp "Can not fetch the minimum element of an empty heap."
+        | Blank -> invalidOp "Can not fetch the minimum/maximum element of an empty heap."
         | One (_, v)
         | Node ((_, v), _)
         | Pair ((_, v), _, _, _) -> v
@@ -164,7 +164,7 @@ module BinaryHeap =
         | Node ((_, v), _)
         | Pair ((_, v), _, _, _) ->
             Some v
-    let removeMin heap =
+    let removeMinOrMax heap =
         {
             kind = heap.kind
             heap =
@@ -175,7 +175,7 @@ module BinaryHeap =
         }
 
     let popMinOrMax heap =
-        tryMinOrMax heap, removeMin heap
+        tryMinOrMax heap, removeMinOrMax heap
         
     let ofList kind pairs =
         {
@@ -190,6 +190,6 @@ module BinaryHeap =
             if heap.IsEmpty then
                 List.rev items
             else
-                build (minOrMax heap :: items) (removeMin heap)
+                build (minOrMax heap :: items) (removeMinOrMax heap)
         
         build [] heap
