@@ -1,32 +1,26 @@
 [<RequireQualifiedAccess>]
 module Functional.Graphs.Graph
-
-open System
 open Functional
 
-let empty<'t when 't : comparison> = Graph (Set.empty, Set.empty): Graph<'t>
+let empty<'t when 't : comparison> = Graph (Set.empty): Graph<'t>
 
-let isDirected (Graph (_, edges)) =
+let isDirected (Graph (edges)) =
     edges
     |> Set.forall (fun (Edge (direction, _, _)) -> direction = Directed)
 
 let fromEdges (edges: #seq<Edge<'t>>) =
-    let edges = Seq.toArray edges
-    
-    let vertices =
-        edges
-        |> Array.collect (fun (Edge (_, a, b)) -> [| Vertex a; Vertex b |])
-        |> Set.ofSeq
-
-    Graph (vertices, Set.ofArray edges)
+    Graph (Set.ofSeq edges)
 
 /// Returns the edges of the specified graph.
-let getEdges (Graph (_, edges)) = edges
+let getEdges (Graph edges) = edges
 /// Returns the vertices of the specified graph.
-let getVertices (Graph (vertices, _)) = vertices
+let getVertices (Graph edges) =
+    edges
+    |> Seq.collect(fun (Edge(_, a, b)) -> [| a; b |])
+    |> Set.ofSeq
 
 /// Converts an undirected graph to a directed graph.
-let toDirect (Graph (vertices, edges): Graph<'t>) =
+let toDirect (Graph (edges): Graph<'t>) =
     let newEdges =
         edges
         |> Set.map (
@@ -36,10 +30,13 @@ let toDirect (Graph (vertices, edges): Graph<'t>) =
         )
         |> Set.union edges
 
-    Graph (vertices, newEdges)
+    Graph (newEdges)
 
 /// Returns a mapping of nodes to a set of nodes that connect to the key node.
-let getIncoming (Graph (vertices, edges): Graph<'t>) =
+let getIncoming (graph: Graph<'t>) =
+    let vertices = getVertices graph
+    let edges = getEdges graph
+    
     let connections =
         edges
         |> Set.toArray
@@ -62,13 +59,16 @@ let getIncoming (Graph (vertices, edges): Graph<'t>) =
         ) Map.empty
 
     vertices
-    |> Set.fold (fun map (Vertex vertex) ->
+    |> Set.fold (fun map vertex ->
         map
         |> Map.tryAdd vertex Set.empty
     ) connections
 
 /// Returns a mapping of nodes to their neighbors.
-let getOutgoing (Graph (vertices, edges): Graph<'t>) =
+let getOutgoing (graph: Graph<'t>) =
+    let vertices = getVertices graph
+    let edges = getEdges graph
+    
     let connections =
         edges
         |> Set.toArray
@@ -91,13 +91,13 @@ let getOutgoing (Graph (vertices, edges): Graph<'t>) =
         ) Map.empty
 
     vertices
-    |> Set.fold (fun map (Vertex vertex) ->
+    |> Set.fold (fun map vertex ->
         map
         |> Map.tryAdd vertex Set.empty
     ) connections
 
-/// Returns a list of all vertices that can be reached from the specified vertex.
-let getAdjacentVertices(Graph (_, edges), (Vertex vertex)) =
+/// Returns a list of all vertices that can be reached with a single step from the specified vertex.
+let getAdjacentVertices(Graph edges, vertex) =
     edges
     |> Set.toList
     |> List.choose (fun (Edge (direction, a, b)) ->
@@ -112,7 +112,8 @@ let getAdjacentVertices(Graph (_, edges), (Vertex vertex)) =
 
 /// Returns a topological sort of the specified graph.
 /// If the graph is cyclic then the function returns an empty list.
-let topologicalSort (Graph (vertices, _) as graph : Graph<'t>) =
+let topologicalSort (graph : Graph<'t>) =
+    let vertices = getVertices graph
     let connections = getIncoming graph
    
     let rec gather (sort: 't[] list) gathered (vertices: 't[]) =
@@ -141,7 +142,7 @@ let topologicalSort (Graph (vertices, _) as graph : Graph<'t>) =
     let roots, vertices =
         vertices
         |> Set.toArray
-        |> Array.partition (fun (Vertex vertex) ->
+        |> Array.partition (fun vertex ->
             connections
             |> Map.containsKey vertex
             |> not
@@ -150,9 +151,6 @@ let topologicalSort (Graph (vertices, _) as graph : Graph<'t>) =
     if roots.Length = 0 then
         [||]
     else
-        let roots = Array.map Vertex.value roots
-        let vertices = Array.map Vertex.value vertices
-
         gather [ roots ] (Set.ofArray roots) vertices
         |> List.toArray
         |> Array.rev
@@ -160,7 +158,7 @@ let topologicalSort (Graph (vertices, _) as graph : Graph<'t>) =
 
 // Shamelessly stolen and ported from wikipedia.
 /// Computes the shortest possible path from one vertex in the graph to another vertex in the graph.
-let a_star heuristic (weight: Vertex<'t> -> Vertex<'t> -> int) start goal (graph: Graph<'t>) =
+let a_star heuristic (weight: 't -> 't -> int) start goal (graph: Graph<'t>) =
     let neighborMap = getOutgoing graph
 
     let reconstructPath cameFrom current =
@@ -173,7 +171,7 @@ let a_star heuristic (weight: Vertex<'t> -> Vertex<'t> -> int) start goal (graph
 
         reconstruct [ current ] current
 
-    let rec search (openHeap: BinaryHeap<Vertex<'t>>) (openSet: Set<Vertex<'t>>) (cameFrom: Map<Vertex<'t>, Vertex<'t>>) (known: Map<Vertex<'t>, int>) (guess: Map<Vertex<'t>, int>) =
+    let rec search (openHeap: BinaryHeap<'t>) (openSet: Set<'t>) (cameFrom: Map<'t, 't>) (known: Map<'t, int>) (guess: Map<'t, int>) =
         if BinaryHeap.isEmpty openHeap then
             ValueNone
         else
@@ -185,13 +183,11 @@ let a_star heuristic (weight: Vertex<'t> -> Vertex<'t> -> int) start goal (graph
                 let openHeap = BinaryHeap.removeMinOrMax openHeap
                 let openSet = Set.remove current openSet
 
-                let neighbors = neighborMap |> Map.find (Vertex.value current)
+                let neighbors = neighborMap |> Map.find current
 
                 let openHeap, openSet, cameFrom, known, guess =
                     neighbors
                     |> Set.fold (fun (openHeap, openSet, cameFrom, known, guess) neighbor ->
-                        let neighbor = Vertex neighbor
-
                         match known |> Map.tryFind current with
                         | Some currentScore ->
                             let tentativeScore = currentScore + weight current neighbor

@@ -376,6 +376,18 @@ let toUpper (string: string) =
     else
         string.ToUpper()
 
+/// Converts a string to title case, that is, capitalizes each word.
+let toTitle (string: string) =
+    string
+    |> splitChar ' '
+    |> Array.map (fun word ->
+        if word.Length <= 1 then
+            word.ToUpper()
+        else
+            Char.ToUpper(word[0]).ToString() + word[1..]
+    )
+    |> String.concat " "
+
 /// Copies the characters from the string into a unicode character array.
 let toCharArray (string: string) =
     if isNull string then

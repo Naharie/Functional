@@ -5,12 +5,15 @@ open FSharp.Reflection
 
 [<RequireQualifiedAccess>]
 module Regex =
+    let isMatch (pattern: string) (text: string) =
+        Regex.IsMatch(text, pattern)
+
     let matches (pattern: string) (text: string) =
         let matches = Regex.Matches(text, pattern)
 
         matches
         |> Seq.cast<Match>
-        |> Seq.map (fun match' -> match'.Value)
+        |> Seq.map (_.Value)
         |> Seq.toList
 
     let groups (pattern: string) (text: string) =
@@ -31,10 +34,12 @@ module Regex =
             match'.Groups
             |> Seq.cast<Group>
             |> Seq.tail
-            |> Seq.map (fun group -> group.Value)
+            |> Seq.map (_.Value)
             |> Seq.toList
         else
             []
+
+    let escape (text: string) = Regex.Escape text
 
 [<AutoOpen>]
 module RegexPrelude =
