@@ -1,6 +1,8 @@
 [<Microsoft.FSharp.Core.AutoOpen>]
 module Functional.UtilityFunctions
 
+open System
+
 let inline apply f x = f x
 let inline apply2 f (x, y) = f x y
 
@@ -19,10 +21,22 @@ let inline (@@@) f c b a = f a b c
 
 let inline constant x _ = x
 
-let note note x =
-    printfn $"%s{note}"
+/// <summary>
+/// Prints the specified note to stdout and returns the input value.
+/// </summary>
+/// <param name="note">The note to display.</param>
+/// <param name="x">The value to pass through.</param>
+/// <returns>The value of <paramref name="x"/>.</returns>
+let note (note: string) x =
+    Console.WriteLine note
     x
 
+/// <summary>
+/// Prints the specified label and the input value to stdout and returns the input value.
+/// </summary>
+/// <param name="label">The note to display.</param>
+/// <param name="x">The value to pass through.</param>
+/// <returns>The value of <paramref name="x"/>.</returns>
 let show label x =
     printfn $"%s{label}: %A{x}"
     x

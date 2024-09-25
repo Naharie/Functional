@@ -3,7 +3,7 @@ namespace Functional
 open System.Collections.Generic
 open Functional
 
-/// An immutable dequeue with armortized O(1) access.
+/// An immutable dequeue with amortized O(1) access.
 [<StructuredFormatDisplay "{AsString}">]
 type dequeue<'t> =
     private | Dequeue of FingerTree<'t>
@@ -109,20 +109,6 @@ module Dequeue =
     let map mapping dequeue =
         let (Dequeue tree) = dequeue
         Dequeue (tree |> FingerTree.map mapping)
-
-    /// Builds a new dequeue containing only the items for which the condition returned true.
-    let filter (condition: 't -> bool) (Dequeue tree) =
-        Dequeue (tree |> FingerTree.filter condition)
-    /// Builds a new dequeue containing the items for which the choice function returned Some.
-    let choose (chooser: 't -> 'u option) (Dequeue tree): 'u dequeue =
-        Dequeue (
-            tree
-            |> FingerTree.choose chooser
-        )
-
-    /// Removes all occurrences of the specified item.
-    let remove (item: 't) queue =
-        filter ((<>) item) queue
 
     /// Rotates the dequeue one step to the left.
     let rotateLeft (dequeue: 't dequeue) =

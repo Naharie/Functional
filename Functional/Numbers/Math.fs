@@ -8,51 +8,69 @@ type radians
 [<Measure>]
 type degrees
 
+/// <summary>
 /// Squares the given number.
+/// </summary>
+/// <param name="x">The number to square.</param>
+/// <returns>The square of the given number.</returns>
 let inline square x = x * x
 
+/// <summary>
 /// Returns the distance between two points.
-/// Always use distSquared when possible as it is more efficient.
-let inline dist x1 y1 x2 y2 =
+/// Always use <see cref="distSquared"/> when possible as it is more efficient.
+/// </summary>
+/// <param name="x1">The x coordinate of the first point.</param>
+/// <param name="y1">The y coordinate of the first point.</param>
+/// <param name="x2">The x coordinate of the second point.</param>
+/// <param name="y2">The y coordinate of the second point.</param>
+/// <returns>The distance between the two specified points.</returns>
+let inline dist (x1, y1) (x2, y2) =
     square (x2 - x1) + square (y2 - y1)
     |> float
     |> sqrt
-/// Returns the distance between two points squared.
+/// <summary>
+/// Returns the square of the distance between two points.
+/// Always use <see cref="distSquared"/> when possible as it is more efficient.
+/// </summary>
+/// <param name="x1">The x coordinate of the first point.</param>
+/// <param name="y1">The y coordinate of the first point.</param>
+/// <param name="x2">The x coordinate of the second point.</param>
+/// <param name="y2">The y coordinate of the second point.</param>
+/// <returns>The square of the distance between the two specified points.</returns>
 let inline distSquared x1 y1 x2 y2 =
     square (x2 - x1) + square (y2 - y1)
     |> float
 
+/// <summary>
 /// Returns a pair of the minimum and the maximum.
 /// The first element is the minimum and the second element is the maximum.
+/// </summary>
+/// <param name="a">The first value to compare.</param>
+/// <param name="b">The second value to compare.</param>
+/// <returns>A pairing of the smaller of the two values and the larger, in that order.</returns>
 let inline minMax a b =
     if a < b then a, b else b, a
 
-/// Gets the rotation needed to turn from the first point (straight up) to face the second point.
-let inline getRotation (x1: 'n) (y1: 'n) (x2: 'n) (y2: 'n): float<radians> =
+/// <summary>
+/// Returns the angle between the two specified points.
+/// </summary>
+/// <param name="x1">The x coordinate of the first point.</param>
+/// <param name="y1">The y coordinate of the first point.</param>
+/// <param name="x2">The x coordinate of the second point.</param>
+/// <param name="y2">The y coordinate of the second point.</param>
+/// <returns>The angle between the two specified points.</returns>
+let inline getRotation (x1: 'n, y1: 'n) (x2: 'n, y2: 'n): float<radians> =
     atan2
         (float x2 - float x1)
         (float y1 - float y2)
     |> LanguagePrimitives.FloatWithMeasure
 
-/// Computes the greatest common divisor of two integers.
-/// This is a faster algorithm that makes use of bitwise arithmetic.
-let rec gcdInt a b =
-    if a = b then a
-    elif a = 0 then b
-    elif b = 0 then a
-    elif ~~~a &&& 1 > 0 then
-        if b &&& 1 > 0 then
-            gcdInt  (a >>> 1) b
-        else
-            gcdInt (a >>> 1) (b >>> 1) <<< 1
-    elif ~~~b &&& 1 > 0 then
-        gcdInt a (b >>> 1)
-    elif a > b then
-        gcdInt (a - b) b
-    else
-        gcdInt (b - a) a
-
+/// <summary>
 /// Computes the greatest common divisor of two numbers.
+/// </summary>
+/// <param name="a">The first number.</param>
+/// <param name="b">The second number.</param>
+/// <returns>The greatest common divisor of the two specified numbers.</returns>
 let rec inline gcd a b =
     let mutable a = a
     let mutable b = b
@@ -65,63 +83,67 @@ let rec inline gcd a b =
 
     if a = 0G then b else a
 
+/// The Fibonacci sequence.
 let fibonacci = Seq.unfold (fun (last, next) -> Some (last, (next, last + next))) (0I, 1I)
 
 /// The first one thousand primes precomputed because most use cases don't need more than this.
 let private primeTable = ResizeArray([|
-    2L; 3L; 5L; 7L; 11L; 13L; 17L; 19L; 23L; 29L; 31L; 37L; 41L; 43L; 47L; 53L; 59L; 61L; 67L; 71L;
-    73L; 79L; 83L; 89L; 97L; 101L; 103L; 107L; 109L; 113L; 127L; 131L; 137L; 139L; 149L; 151L; 157L; 163L; 167L; 173L;
-    179L; 181L; 191L; 193L; 197L; 199L; 211L; 223L; 227L; 229L; 233L; 239L; 241L; 251L; 257L; 263L; 269L; 271L; 277L; 281L;
-    283L; 293L; 307L; 311L; 313L; 317L; 331L; 337L; 347L; 349L; 353L; 359L; 367L; 373L; 379L; 383L; 389L; 397L; 401L; 409L;
-    419L; 421L; 431L; 433L; 439L; 443L; 449L; 457L; 461L; 463L; 467L; 479L; 487L; 491L; 499L; 503L; 509L; 521L; 523L; 541L;
-    547L; 557L; 563L; 569L; 571L; 577L; 587L; 593L; 599L; 601L; 607L; 613L; 617L; 619L; 631L; 641L; 643L; 647L; 653L; 659L;
-    661L; 673L; 677L; 683L; 691L; 701L; 709L; 719L; 727L; 733L; 739L; 743L; 751L; 757L; 761L; 769L; 773L; 787L; 797L; 809L;
-    811L; 821L; 823L; 827L; 829L; 839L; 853L; 857L; 859L; 863L; 877L; 881L; 883L; 887L; 907L; 911L; 919L; 929L; 937L; 941L;
-    947L; 953L; 967L; 971L; 977L; 983L; 991L; 997L; 1009L; 1013L; 1019L; 1021L; 1031L; 1033L; 1039L; 1049L; 1051L; 1061L; 1063L; 1069L;
-    1087L; 1091L; 1093L; 1097L; 1103L; 1109L; 1117L; 1123L; 1129L; 1151L; 1153L; 1163L; 1171L; 1181L; 1187L; 1193L; 1201L; 1213L; 1217L; 1223L;
-    1229L; 1231L; 1237L; 1249L; 1259L; 1277L; 1279L; 1283L; 1289L; 1291L; 1297L; 1301L; 1303L; 1307L; 1319L; 1321L; 1327L; 1361L; 1367L; 1373L;
-    1381L; 1399L; 1409L; 1423L; 1427L; 1429L; 1433L; 1439L; 1447L; 1451L; 1453L; 1459L; 1471L; 1481L; 1483L; 1487L; 1489L; 1493L; 1499L; 1511L;
-    1523L; 1531L; 1543L; 1549L; 1553L; 1559L; 1567L; 1571L; 1579L; 1583L; 1597L; 1601L; 1607L; 1609L; 1613L; 1619L; 1621L; 1627L; 1637L; 1657L;
-    1663L; 1667L; 1669L; 1693L; 1697L; 1699L; 1709L; 1721L; 1723L; 1733L; 1741L; 1747L; 1753L; 1759L; 1777L; 1783L; 1787L; 1789L; 1801L; 1811L;
-    1823L; 1831L; 1847L; 1861L; 1867L; 1871L; 1873L; 1877L; 1879L; 1889L; 1901L; 1907L; 1913L; 1931L; 1933L; 1949L; 1951L; 1973L; 1979L; 1987L;
-    1993L; 1997L; 1999L; 2003L; 2011L; 2017L; 2027L; 2029L; 2039L; 2053L; 2063L; 2069L; 2081L; 2083L; 2087L; 2089L; 2099L; 2111L; 2113L; 2129L;
-    2131L; 2137L; 2141L; 2143L; 2153L; 2161L; 2179L; 2203L; 2207L; 2213L; 2221L; 2237L; 2239L; 2243L; 2251L; 2267L; 2269L; 2273L; 2281L; 2287L;
-    2293L; 2297L; 2309L; 2311L; 2333L; 2339L; 2341L; 2347L; 2351L; 2357L; 2371L; 2377L; 2381L; 2383L; 2389L; 2393L; 2399L; 2411L; 2417L; 2423L;
-    2437L; 2441L; 2447L; 2459L; 2467L; 2473L; 2477L; 2503L; 2521L; 2531L; 2539L; 2543L; 2549L; 2551L; 2557L; 2579L; 2591L; 2593L; 2609L; 2617L;
-    2621L; 2633L; 2647L; 2657L; 2659L; 2663L; 2671L; 2677L; 2683L; 2687L; 2689L; 2693L; 2699L; 2707L; 2711L; 2713L; 2719L; 2729L; 2731L; 2741L;
-    2749L; 2753L; 2767L; 2777L; 2789L; 2791L; 2797L; 2801L; 2803L; 2819L; 2833L; 2837L; 2843L; 2851L; 2857L; 2861L; 2879L; 2887L; 2897L; 2903L;
-    2909L; 2917L; 2927L; 2939L; 2953L; 2957L; 2963L; 2969L; 2971L; 2999L; 3001L; 3011L; 3019L; 3023L; 3037L; 3041L; 3049L; 3061L; 3067L; 3079L;
-    3083L; 3089L; 3109L; 3119L; 3121L; 3137L; 3163L; 3167L; 3169L; 3181L; 3187L; 3191L; 3203L; 3209L; 3217L; 3221L; 3229L; 3251L; 3253L; 3257L;
-    3259L; 3271L; 3299L; 3301L; 3307L; 3313L; 3319L; 3323L; 3329L; 3331L; 3343L; 3347L; 3359L; 3361L; 3371L; 3373L; 3389L; 3391L; 3407L; 3413L;
-    3433L; 3449L; 3457L; 3461L; 3463L; 3467L; 3469L; 3491L; 3499L; 3511L; 3517L; 3527L; 3529L; 3533L; 3539L; 3541L; 3547L; 3557L; 3559L; 3571L;
-    3581L; 3583L; 3593L; 3607L; 3613L; 3617L; 3623L; 3631L; 3637L; 3643L; 3659L; 3671L; 3673L; 3677L; 3691L; 3697L; 3701L; 3709L; 3719L; 3727L;
-    3733L; 3739L; 3761L; 3767L; 3769L; 3779L; 3793L; 3797L; 3803L; 3821L; 3823L; 3833L; 3847L; 3851L; 3853L; 3863L; 3877L; 3881L; 3889L; 3907L;
-    3911L; 3917L; 3919L; 3923L; 3929L; 3931L; 3943L; 3947L; 3967L; 3989L; 4001L; 4003L; 4007L; 4013L; 4019L; 4021L; 4027L; 4049L; 4051L; 4057L;
-    4073L; 4079L; 4091L; 4093L; 4099L; 4111L; 4127L; 4129L; 4133L; 4139L; 4153L; 4157L; 4159L; 4177L; 4201L; 4211L; 4217L; 4219L; 4229L; 4231L;
-    4241L; 4243L; 4253L; 4259L; 4261L; 4271L; 4273L; 4283L; 4289L; 4297L; 4327L; 4337L; 4339L; 4349L; 4357L; 4363L; 4373L; 4391L; 4397L; 4409L;
-    4421L; 4423L; 4441L; 4447L; 4451L; 4457L; 4463L; 4481L; 4483L; 4493L; 4507L; 4513L; 4517L; 4519L; 4523L; 4547L; 4549L; 4561L; 4567L; 4583L;
-    4591L; 4597L; 4603L; 4621L; 4637L; 4639L; 4643L; 4649L; 4651L; 4657L; 4663L; 4673L; 4679L; 4691L; 4703L; 4721L; 4723L; 4729L; 4733L; 4751L;
-    4759L; 4783L; 4787L; 4789L; 4793L; 4799L; 4801L; 4813L; 4817L; 4831L; 4861L; 4871L; 4877L; 4889L; 4903L; 4909L; 4919L; 4931L; 4933L; 4937L;
-    4943L; 4951L; 4957L; 4967L; 4969L; 4973L; 4987L; 4993L; 4999L; 5003L; 5009L; 5011L; 5021L; 5023L; 5039L; 5051L; 5059L; 5077L; 5081L; 5087L;
-    5099L; 5101L; 5107L; 5113L; 5119L; 5147L; 5153L; 5167L; 5171L; 5179L; 5189L; 5197L; 5209L; 5227L; 5231L; 5233L; 5237L; 5261L; 5273L; 5279L;
-    5281L; 5297L; 5303L; 5309L; 5323L; 5333L; 5347L; 5351L; 5381L; 5387L; 5393L; 5399L; 5407L; 5413L; 5417L; 5419L; 5431L; 5437L; 5441L; 5443L;
-    5449L; 5471L; 5477L; 5479L; 5483L; 5501L; 5503L; 5507L; 5519L; 5521L; 5527L; 5531L; 5557L; 5563L; 5569L; 5573L; 5581L; 5591L; 5623L; 5639L;
-    5641L; 5647L; 5651L; 5653L; 5657L; 5659L; 5669L; 5683L; 5689L; 5693L; 5701L; 5711L; 5717L; 5737L; 5741L; 5743L; 5749L; 5779L; 5783L; 5791L;
-    5801L; 5807L; 5813L; 5821L; 5827L; 5839L; 5843L; 5849L; 5851L; 5857L; 5861L; 5867L; 5869L; 5879L; 5881L; 5897L; 5903L; 5923L; 5927L; 5939L;
-    5953L; 5981L; 5987L; 6007L; 6011L; 6029L; 6037L; 6043L; 6047L; 6053L; 6067L; 6073L; 6079L; 6089L; 6091L; 6101L; 6113L; 6121L; 6131L; 6133L;
-    6143L; 6151L; 6163L; 6173L; 6197L; 6199L; 6203L; 6211L; 6217L; 6221L; 6229L; 6247L; 6257L; 6263L; 6269L; 6271L; 6277L; 6287L; 6299L; 6301L;
-    6311L; 6317L; 6323L; 6329L; 6337L; 6343L; 6353L; 6359L; 6361L; 6367L; 6373L; 6379L; 6389L; 6397L; 6421L; 6427L; 6449L; 6451L; 6469L; 6473L;
-    6481L; 6491L; 6521L; 6529L; 6547L; 6551L; 6553L; 6563L; 6569L; 6571L; 6577L; 6581L; 6599L; 6607L; 6619L; 6637L; 6653L; 6659L; 6661L; 6673L;
-    6679L; 6689L; 6691L; 6701L; 6703L; 6709L; 6719L; 6733L; 6737L; 6761L; 6763L; 6779L; 6781L; 6791L; 6793L; 6803L; 6823L; 6827L; 6829L; 6833L;
-    6841L; 6857L; 6863L; 6869L; 6871L; 6883L; 6899L; 6907L; 6911L; 6917L; 6947L; 6949L; 6959L; 6961L; 6967L; 6971L; 6977L; 6983L; 6991L; 6997L;
-    7001L; 7013L; 7019L; 7027L; 7039L; 7043L; 7057L; 7069L; 7079L; 7103L; 7109L; 7121L; 7127L; 7129L; 7151L; 7159L; 7177L; 7187L; 7193L; 7207L;
-    7211L; 7213L; 7219L; 7229L; 7237L; 7243L; 7247L; 7253L; 7283L; 7297L; 7307L; 7309L; 7321L; 7331L; 7333L; 7349L; 7351L; 7369L; 7393L; 7411L;
-    7417L; 7433L; 7451L; 7457L; 7459L; 7477L; 7481L; 7487L; 7489L; 7499L; 7507L; 7517L; 7523L; 7529L; 7537L; 7541L; 7547L; 7549L; 7559L; 7561L;
-    7573L; 7577L; 7583L; 7589L; 7591L; 7603L; 7607L; 7621L; 7639L; 7643L; 7649L; 7669L; 7673L; 7681L; 7687L; 7691L; 7699L; 7703L; 7717L; 7723L;
-    7727L; 7741L; 7753L; 7757L; 7759L; 7789L; 7793L; 7817L; 7823L; 7829L; 7841L; 7853L; 7867L; 7873L; 7877L; 7879L; 7883L; 7901L; 7907L; 7919L
+    2I; 3I; 5I; 7I; 11I; 13I; 17I; 19I; 23I; 29I; 31I; 37I; 41I; 43I; 47I; 53I; 59I; 61I; 67I; 71I;
+    73I; 79I; 83I; 89I; 97I; 101I; 103I; 107I; 109I; 113I; 127I; 131I; 137I; 139I; 149I; 151I; 157I; 163I; 167I; 173I;
+    179I; 181I; 191I; 193I; 197I; 199I; 211I; 223I; 227I; 229I; 233I; 239I; 241I; 251I; 257I; 263I; 269I; 271I; 277I; 281I;
+    283I; 293I; 307I; 311I; 313I; 317I; 331I; 337I; 347I; 349I; 353I; 359I; 367I; 373I; 379I; 383I; 389I; 397I; 401I; 409I;
+    419I; 421I; 431I; 433I; 439I; 443I; 449I; 457I; 461I; 463I; 467I; 479I; 487I; 491I; 499I; 503I; 509I; 521I; 523I; 541I;
+    547I; 557I; 563I; 569I; 571I; 577I; 587I; 593I; 599I; 601I; 607I; 613I; 617I; 619I; 631I; 641I; 643I; 647I; 653I; 659I;
+    661I; 673I; 677I; 683I; 691I; 701I; 709I; 719I; 727I; 733I; 739I; 743I; 751I; 757I; 761I; 769I; 773I; 787I; 797I; 809I;
+    811I; 821I; 823I; 827I; 829I; 839I; 853I; 857I; 859I; 863I; 877I; 881I; 883I; 887I; 907I; 911I; 919I; 929I; 937I; 941I;
+    947I; 953I; 967I; 971I; 977I; 983I; 991I; 997I; 1009I; 1013I; 1019I; 1021I; 1031I; 1033I; 1039I; 1049I; 1051I; 1061I; 1063I; 1069I;
+    1087I; 1091I; 1093I; 1097I; 1103I; 1109I; 1117I; 1123I; 1129I; 1151I; 1153I; 1163I; 1171I; 1181I; 1187I; 1193I; 1201I; 1213I; 1217I; 1223I;
+    1229I; 1231I; 1237I; 1249I; 1259I; 1277I; 1279I; 1283I; 1289I; 1291I; 1297I; 1301I; 1303I; 1307I; 1319I; 1321I; 1327I; 1361I; 1367I; 1373I;
+    1381I; 1399I; 1409I; 1423I; 1427I; 1429I; 1433I; 1439I; 1447I; 1451I; 1453I; 1459I; 1471I; 1481I; 1483I; 1487I; 1489I; 1493I; 1499I; 1511I;
+    1523I; 1531I; 1543I; 1549I; 1553I; 1559I; 1567I; 1571I; 1579I; 1583I; 1597I; 1601I; 1607I; 1609I; 1613I; 1619I; 1621I; 1627I; 1637I; 1657I;
+    1663I; 1667I; 1669I; 1693I; 1697I; 1699I; 1709I; 1721I; 1723I; 1733I; 1741I; 1747I; 1753I; 1759I; 1777I; 1783I; 1787I; 1789I; 1801I; 1811I;
+    1823I; 1831I; 1847I; 1861I; 1867I; 1871I; 1873I; 1877I; 1879I; 1889I; 1901I; 1907I; 1913I; 1931I; 1933I; 1949I; 1951I; 1973I; 1979I; 1987I;
+    1993I; 1997I; 1999I; 2003I; 2011I; 2017I; 2027I; 2029I; 2039I; 2053I; 2063I; 2069I; 2081I; 2083I; 2087I; 2089I; 2099I; 2111I; 2113I; 2129I;
+    2131I; 2137I; 2141I; 2143I; 2153I; 2161I; 2179I; 2203I; 2207I; 2213I; 2221I; 2237I; 2239I; 2243I; 2251I; 2267I; 2269I; 2273I; 2281I; 2287I;
+    2293I; 2297I; 2309I; 2311I; 2333I; 2339I; 2341I; 2347I; 2351I; 2357I; 2371I; 2377I; 2381I; 2383I; 2389I; 2393I; 2399I; 2411I; 2417I; 2423I;
+    2437I; 2441I; 2447I; 2459I; 2467I; 2473I; 2477I; 2503I; 2521I; 2531I; 2539I; 2543I; 2549I; 2551I; 2557I; 2579I; 2591I; 2593I; 2609I; 2617I;
+    2621I; 2633I; 2647I; 2657I; 2659I; 2663I; 2671I; 2677I; 2683I; 2687I; 2689I; 2693I; 2699I; 2707I; 2711I; 2713I; 2719I; 2729I; 2731I; 2741I;
+    2749I; 2753I; 2767I; 2777I; 2789I; 2791I; 2797I; 2801I; 2803I; 2819I; 2833I; 2837I; 2843I; 2851I; 2857I; 2861I; 2879I; 2887I; 2897I; 2903I;
+    2909I; 2917I; 2927I; 2939I; 2953I; 2957I; 2963I; 2969I; 2971I; 2999I; 3001I; 3011I; 3019I; 3023I; 3037I; 3041I; 3049I; 3061I; 3067I; 3079I;
+    3083I; 3089I; 3109I; 3119I; 3121I; 3137I; 3163I; 3167I; 3169I; 3181I; 3187I; 3191I; 3203I; 3209I; 3217I; 3221I; 3229I; 3251I; 3253I; 3257I;
+    3259I; 3271I; 3299I; 3301I; 3307I; 3313I; 3319I; 3323I; 3329I; 3331I; 3343I; 3347I; 3359I; 3361I; 3371I; 3373I; 3389I; 3391I; 3407I; 3413I;
+    3433I; 3449I; 3457I; 3461I; 3463I; 3467I; 3469I; 3491I; 3499I; 3511I; 3517I; 3527I; 3529I; 3533I; 3539I; 3541I; 3547I; 3557I; 3559I; 3571I;
+    3581I; 3583I; 3593I; 3607I; 3613I; 3617I; 3623I; 3631I; 3637I; 3643I; 3659I; 3671I; 3673I; 3677I; 3691I; 3697I; 3701I; 3709I; 3719I; 3727I;
+    3733I; 3739I; 3761I; 3767I; 3769I; 3779I; 3793I; 3797I; 3803I; 3821I; 3823I; 3833I; 3847I; 3851I; 3853I; 3863I; 3877I; 3881I; 3889I; 3907I;
+    3911I; 3917I; 3919I; 3923I; 3929I; 3931I; 3943I; 3947I; 3967I; 3989I; 4001I; 4003I; 4007I; 4013I; 4019I; 4021I; 4027I; 4049I; 4051I; 4057I;
+    4073I; 4079I; 4091I; 4093I; 4099I; 4111I; 4127I; 4129I; 4133I; 4139I; 4153I; 4157I; 4159I; 4177I; 4201I; 4211I; 4217I; 4219I; 4229I; 4231I;
+    4241I; 4243I; 4253I; 4259I; 4261I; 4271I; 4273I; 4283I; 4289I; 4297I; 4327I; 4337I; 4339I; 4349I; 4357I; 4363I; 4373I; 4391I; 4397I; 4409I;
+    4421I; 4423I; 4441I; 4447I; 4451I; 4457I; 4463I; 4481I; 4483I; 4493I; 4507I; 4513I; 4517I; 4519I; 4523I; 4547I; 4549I; 4561I; 4567I; 4583I;
+    4591I; 4597I; 4603I; 4621I; 4637I; 4639I; 4643I; 4649I; 4651I; 4657I; 4663I; 4673I; 4679I; 4691I; 4703I; 4721I; 4723I; 4729I; 4733I; 4751I;
+    4759I; 4783I; 4787I; 4789I; 4793I; 4799I; 4801I; 4813I; 4817I; 4831I; 4861I; 4871I; 4877I; 4889I; 4903I; 4909I; 4919I; 4931I; 4933I; 4937I;
+    4943I; 4951I; 4957I; 4967I; 4969I; 4973I; 4987I; 4993I; 4999I; 5003I; 5009I; 5011I; 5021I; 5023I; 5039I; 5051I; 5059I; 5077I; 5081I; 5087I;
+    5099I; 5101I; 5107I; 5113I; 5119I; 5147I; 5153I; 5167I; 5171I; 5179I; 5189I; 5197I; 5209I; 5227I; 5231I; 5233I; 5237I; 5261I; 5273I; 5279I;
+    5281I; 5297I; 5303I; 5309I; 5323I; 5333I; 5347I; 5351I; 5381I; 5387I; 5393I; 5399I; 5407I; 5413I; 5417I; 5419I; 5431I; 5437I; 5441I; 5443I;
+    5449I; 5471I; 5477I; 5479I; 5483I; 5501I; 5503I; 5507I; 5519I; 5521I; 5527I; 5531I; 5557I; 5563I; 5569I; 5573I; 5581I; 5591I; 5623I; 5639I;
+    5641I; 5647I; 5651I; 5653I; 5657I; 5659I; 5669I; 5683I; 5689I; 5693I; 5701I; 5711I; 5717I; 5737I; 5741I; 5743I; 5749I; 5779I; 5783I; 5791I;
+    5801I; 5807I; 5813I; 5821I; 5827I; 5839I; 5843I; 5849I; 5851I; 5857I; 5861I; 5867I; 5869I; 5879I; 5881I; 5897I; 5903I; 5923I; 5927I; 5939I;
+    5953I; 5981I; 5987I; 6007I; 6011I; 6029I; 6037I; 6043I; 6047I; 6053I; 6067I; 6073I; 6079I; 6089I; 6091I; 6101I; 6113I; 6121I; 6131I; 6133I;
+    6143I; 6151I; 6163I; 6173I; 6197I; 6199I; 6203I; 6211I; 6217I; 6221I; 6229I; 6247I; 6257I; 6263I; 6269I; 6271I; 6277I; 6287I; 6299I; 6301I;
+    6311I; 6317I; 6323I; 6329I; 6337I; 6343I; 6353I; 6359I; 6361I; 6367I; 6373I; 6379I; 6389I; 6397I; 6421I; 6427I; 6449I; 6451I; 6469I; 6473I;
+    6481I; 6491I; 6521I; 6529I; 6547I; 6551I; 6553I; 6563I; 6569I; 6571I; 6577I; 6581I; 6599I; 6607I; 6619I; 6637I; 6653I; 6659I; 6661I; 6673I;
+    6679I; 6689I; 6691I; 6701I; 6703I; 6709I; 6719I; 6733I; 6737I; 6761I; 6763I; 6779I; 6781I; 6791I; 6793I; 6803I; 6823I; 6827I; 6829I; 6833I;
+    6841I; 6857I; 6863I; 6869I; 6871I; 6883I; 6899I; 6907I; 6911I; 6917I; 6947I; 6949I; 6959I; 6961I; 6967I; 6971I; 6977I; 6983I; 6991I; 6997I;
+    7001I; 7013I; 7019I; 7027I; 7039I; 7043I; 7057I; 7069I; 7079I; 7103I; 7109I; 7121I; 7127I; 7129I; 7151I; 7159I; 7177I; 7187I; 7193I; 7207I;
+    7211I; 7213I; 7219I; 7229I; 7237I; 7243I; 7247I; 7253I; 7283I; 7297I; 7307I; 7309I; 7321I; 7331I; 7333I; 7349I; 7351I; 7369I; 7393I; 7411I;
+    7417I; 7433I; 7451I; 7457I; 7459I; 7477I; 7481I; 7487I; 7489I; 7499I; 7507I; 7517I; 7523I; 7529I; 7537I; 7541I; 7547I; 7549I; 7559I; 7561I;
+    7573I; 7577I; 7583I; 7589I; 7591I; 7603I; 7607I; 7621I; 7639I; 7643I; 7649I; 7669I; 7673I; 7681I; 7687I; 7691I; 7699I; 7703I; 7717I; 7723I;
+    7727I; 7741I; 7753I; 7757I; 7759I; 7789I; 7793I; 7817I; 7823I; 7829I; 7841I; 7853I; 7867I; 7873I; 7877I; 7879I; 7883I; 7901I; 7907I; 7919I
 |])
+let private minFloatBigInt = bigint Double.MinValue
+let private maxFloatBigInt = bigint Double.MaxValue
+
 let rec private computeNextPrime () =
-    let mutable current = primeTable[primeTable.Count - 1] + 2L
+    let mutable current = primeTable[primeTable.Count - 1] + 2I
     let mutable foundPrime = false
     
     while not foundPrime do
@@ -129,16 +151,25 @@ let rec private computeNextPrime () =
             primeTable.Add current
             foundPrime <- true
         else
-            current <- current + 2L
+            current <- current + 2I
 
+/// <summary>
 /// Determines if the specified number is prime.
-and isPrime (number: int64) =
+/// </summary>
+/// <param name="number">The number to check the primeness of.</param>
+/// <returns>Whether the specified number is prime.</returns>
+and isPrime (number: bigint) =
     let mutable isPrime = true
-    let limit = sqrt (float number) |> int64 |> (+) 1L
+    let limit =
+        if number > minFloatBigInt && number < maxFloatBigInt then
+            sqrt (float number) |> bigint |> (+) 1I
+        else
+            number / 2I
+
     let mutable factorIndex = 0
     
     while isPrime && primeTable[factorIndex] < limit do
-        if number % primeTable[factorIndex] = 0L then
+        if number % primeTable[factorIndex] = 0I then
             isPrime <- false
         
         factorIndex <- factorIndex + 1
@@ -147,7 +178,8 @@ and isPrime (number: int64) =
             computeNextPrime()
     
     isPrime
-    
+ 
+/// The sequence of all prime numbers.
 let primes = Seq.initInfinite(fun index ->
     while index >= primeTable.Count do
         computeNextPrime()

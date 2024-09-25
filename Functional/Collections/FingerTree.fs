@@ -110,9 +110,6 @@ with
             (this :> IEnumerable<'t>).GetEnumerator() :> Collections.IEnumerator
     interface IReadOnlyCollection<'t> with
         member this.Count = this.Size
-    interface IReadOnlyList<'t> with
-        member this.Item with get index =
-            FingerTree.item index this
 
     member private this.AsString =
         match this with
@@ -120,7 +117,7 @@ with
         | Single value -> $"({value})"
         | Deep (prefix, tree, suffix) -> $"({prefix}, {tree}, {suffix})"
 
-    /// Determines whether or not this tree contains any elements.
+    /// Determines whether this tree contains any elements.
     member this.IsEmpty =
         match this with
         | Blank -> true
@@ -129,9 +126,6 @@ with
 
     /// The total number of leaves in the tree.
     member this.Size = FingerTree.size this
-    
-    member this.Item with get index =
-        FingerTree.item index this
 
     override this.ToString () = this.AsString
 
@@ -155,8 +149,7 @@ with
 
         | _ -> false
 
-    override this.GetHashCode () =
-        Unchecked.hash (FingerTree.toList this)
+    override this.GetHashCode () = Unchecked.hash (FingerTree.toArray this)
 
 /// A lazily produced list like view of a finger tree.
 type View<'t> =
@@ -173,8 +166,71 @@ module FingerTree =
             | Two (a, b) -> Deep(One a, Blank, One b)
             | Three (a, b, c) -> Deep (One a, Blank, Two (b, c))
             | Four (a, b, c, d) -> Deep (Two (a, b), Blank, Two (c, d))
+            
+        let toSeqInternal tree =
+            Seq.unfold (fun rest ->
+                match view rest with
+                | View (value, rest) -> Some (value, rest)
+                | EmptyView -> None
+            ) tree
+        let ofSeqInternal (sequence: #seq<'t>) =
+            sequence
+            |> Seq.fold (fun tree item -> appendRight item tree) Blank
+            
+        let foldInternal (folder: 'state -> 't -> 'state) (state: 'state) (tree: FingerTree<'t>) : 'state =
+            let rec fold state rest =
+                match view rest with
+                | EmptyView -> state
+                | View (value, rest) ->
+                    fold (folder state value) rest
 
-    /// Determines whether or not this tree contains any elements.
+            fold state tree
+    
+    // Core
+    
+    /// Returns a new finger tree that contains all pairings of elements from the first and second trees.
+    let allPairs (a: 't FingerTree) (b: 'u FingerTree) =
+        let s1 = toSeqInternal a
+        let s2 = toSeqInternal b
+        
+        Seq.allPairs s1 s2
+        |> ofSeqInternal
+    
+    /// Concatenates two finger trees into a single larger tree.
+    let append a b =
+        b
+        |> foldInternal (fun result item ->
+            appendRight item result
+        ) a
+
+    /// An empty finger tree.
+    let empty<'t> = Blank : FingerTree<'t>
+    
+    /// Applies a function to each element of the tree, threading an accumulator argument through the computation.
+    /// Take the second argument, and apply the function to it and the first element of the tree.
+    /// Then feed this result into the function along with the second element and so on.
+    /// Return the final result.
+    /// If the input function is f and the elements are i0...iN then computes f (... (f s i0) i1 ...) iN.
+    let fold (folder: 'state -> 't -> 'state) (state: 'state) (tree: FingerTree<'t>) : 'state = foldInternal folder state tree
+
+    /// Applies a function to each element of the tree, starting from the end, threading an accumulator argument through the computation.
+    /// If the input function is f and the elements are i0...iN then computes f i0 (...(f iN s)).
+    let foldBack (folder: 't -> 'state -> 'state) (tree: FingerTree<'t>) (state: 'state) =    
+        let rec foldBack state rest =
+            match viewRev rest with
+            | EmptyView -> state
+            | View (value, rest) ->
+                foldBack (folder value state) rest
+
+        foldBack state tree
+    
+    // Generic
+    
+    // Specific
+    
+    // Unsorted
+    
+    /// Determines whether this tree contains any elements.
     let isEmpty (tree: FingerTree<'t>) = tree.IsEmpty
 
     /// Lazily converts a finger tree into a list like view.
@@ -223,9 +279,6 @@ module FingerTree =
         
         | Deep(left, middle, Four (d, c, b, a)) ->
             View(a, Deep (left, middle, Three (d, c, b)))
-
-    /// An empty finger tree.
-    let empty<'t> = Blank : FingerTree<'t>
 
     /// Attempts to return the leftmost leaf of the tree.
     let left (tree: FingerTree<'t>) =
@@ -336,10 +389,13 @@ module FingerTree =
         | Deep(left, middle, Four (d, c, b, a)) ->
             Some a, Deep (left, middle, Three (d, c, b))
 
+    /// Fetches the item at the specified index.
+    /// This function is slow and requires O(n) time to find the item.
     let rec item index tree =
-        tree
-        |> toSeq
-        |> Seq.item index
+        match view tree with
+        | EmptyView -> indexOutOfRange "Index was outside the bounds of the finger tree."
+        | View (value, rest) ->
+            if index = 0 then value else item (index - 1) rest
 
     /// Appends the specified value to the front of the tree.
     let rec appendLeft<'t> (value: 't) (tree: FingerTree<'t>) : FingerTree<'t> =
@@ -377,36 +433,6 @@ module FingerTree =
                 false
             else
                 isShallow middle (depth + 1) threshold
-
-    /// Applies a function to each element of the tree, threading an accumulator argument through the computation.
-    /// Take the second argument, and apply the function to it and the first element of the tree.
-    /// Then feed this result into the function along with the second element and so on.
-    /// Return the final result.
-    /// If the input function is f and the elements are i0...iN then computes f (... (f s i0) i1 ...) iN.
-    let fold (folder: 'state -> 't -> 'state) (state: 'state) (tree: FingerTree<'t>) : 'state =
-        let rec fold state rest =
-            match view rest with
-            | EmptyView -> state
-            | View (value, rest) ->
-                fold (folder state value) rest
-
-        fold state tree
-
-    /// Applies a function to each element of the tree, starting from the end, threading an accumulator argument through the computation.
-    /// If the input function is f and the elements are i0...iN then computes f i0 (...(f iN s)).
-    let foldBack (folder: 't -> 'state -> 'state) (tree: FingerTree<'t>) (state: 'state) =    
-        let rec foldBack state rest =
-            match viewRev rest with
-            | EmptyView -> state
-            | View (value, rest) ->
-                foldBack (folder value state) rest
-
-        foldBack state tree
-
-    /// Merges the two trees into a single larger tree.
-    let merge (left: FingerTree<'t>, right: FingerTree<'t>) =
-        right
-        |> fold (fun state item -> appendRight item state) left
 
     let rec private mapShallow<'t, 'u> (mapping: 't -> 'u) (tree: FingerTree<'t>): FingerTree<'u> =
         match tree with
@@ -614,9 +640,4 @@ module FingerTree =
         result
 
     /// Converts the finger tree into a sequence.
-    let toSeq tree =
-        Seq.unfold (fun rest ->
-            match view rest with
-            | View (value, rest) -> Some (value, rest)
-            | EmptyView -> None
-        ) tree
+    let toSeq tree = toSeqInternal tree

@@ -1,19 +1,34 @@
-module Functional.ComputationBuilders.Imperative
+// This module is not called "Imperative" to stop it from auto completing above the imperative {} expression.
+module Functional.ComputationBuilders.FastStopBuilder
 
 open System
 
-type Imperative<'t> = unit -> 't option
+type ImperativeResult<'t> =
+    | Returned of 't
+    | DidNotReturn
+    | SkippedIteration
+    | StoppedIteration
+type Imperative<'t> = unit -> ImperativeResult<'t>
 
 type ImperativeBuilder() =
-    member _.Return value = fun () -> Some value
-    member _.Zero () = fun () -> None
+    member _.Return value = fun () -> Returned value
+    member _.Zero () = fun () -> DidNotReturn
     
-    member _.Delay (f: unit -> _ Imperative) =  (fun () -> f()())
+    member _.Delay (f: unit -> _ Imperative) = fun () -> f()()
   
+    member _.Bind (value: ImperativeResult<_>, f: unit -> Imperative<_>) = fun () ->
+        match value with
+        | Returned t -> Returned t
+        | DidNotReturn -> f()()
+        | SkippedIteration -> SkippedIteration
+        | StoppedIteration -> StoppedIteration
+    
     member _.Combine (a: _ Imperative, b: _ Imperative) = (fun () ->
         match a() with 
-        | Some(v) -> Some(v) 
-        | _ -> b()
+        | Returned v  -> Returned v
+        | SkippedIteration -> SkippedIteration
+        | StoppedIteration -> StoppedIteration
+        | DidNotReturn -> b()
     )
     
     member this.TryWith (body: _ Imperative, handler : exn -> _ Imperative) = (fun () ->
@@ -43,7 +58,12 @@ type ImperativeBuilder() =
     member this.While (condition, body: _ Imperative) =
         if not <| condition() then this.Zero()
         else
-            this.Combine(body, this.Delay(fun () -> this.While(condition, body)))
+            (fun () ->
+                match body() with 
+                | Returned v  -> Returned v
+                | StoppedIteration -> DidNotReturn
+                | DidNotReturn | SkippedIteration -> this.While(condition, body)()
+            )
     member this.For (sequence: seq<_>, body) =
         this.Using (
             sequence.GetEnumerator (),
@@ -57,6 +77,6 @@ type ImperativeBuilder() =
 
     member _.Run (work: _ Imperative) =
         match work() with
-        | Some v -> v
-        | None ->
+        | Returned v -> v
+        | DidNotReturn | SkippedIteration | StoppedIteration ->
             failwith "Imperative computation expression did not return a value!"

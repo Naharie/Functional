@@ -8,6 +8,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="Exceptions\NoValidItemException.fs" />
+        <Compile Include="Errors.fs" />
+        
         <Compile Include="Checks.fs" />
         <Compile Include="Lazy.fs" />
         <Compile Include="ActivePatterns.fs" />
@@ -41,11 +44,12 @@
         <Compile Include="Collections\FingerTree.fs" />
         <Compile Include="Collections\Queue.fs" />
         <Compile Include="Collections\Dequeue.fs" />
+        <Compile Include="Collections\Vector.fs" />
 
         <Compile Include="ComputationBuilders\ComputationBuilders.fs" />
         <Compile Include="ComputationBuilders\Maybe.fs" />
         <Compile Include="ComputationBuilders\Result.fs" />
-        <Compile Include="ComputationBuilders\Imperative.fs" />
+        <Compile Include="ComputationBuilders\FastStopBuilder.fs" />
         <Compile Include="ComputationBuilders\Prelude.fs" />
         
         <Compile Include="Graphs\Graph.Types.fs" />
@@ -56,10 +60,8 @@
         <Compile Include="Parsing\ParseFunctions.fs" />
         
         <Compile Include="Networking\Networking.fs" />
-
-        <Compile Include="Prelude\Errors.fs" />
-        <Compile Include="Prelude\Types.fs" />
-        <Compile Include="Prelude\Prelude.fs" />
+        
+        <Compile Include="Prelude.fs" />
         
         <Folder Include="Data\" />
     </ItemGroup>

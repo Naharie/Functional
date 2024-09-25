@@ -109,21 +109,23 @@ let indexOfAnyChar chars (string: string) =
 
 /// Returns the first index at which one of the specified substrings appears or negative one of the substrings do not appear within the string.
 let indexOfAny (substrings: string list) (string: string) =
-    let mutable index = 0
-    let mutable found = false
-    
-    while not found && index < string.Length do
-        if
-            substrings
-            |> List.exists (fun substring ->
-                index + substring.Length <= string.Length && string.Substring(index, substring.Length) = substring
-            )
-        then
-            found <- true
-        else
-            index <- index + 1
-    
-    if found then index else -1
+    if isNull string then false
+    else
+        let mutable index = 0
+        let mutable found = false
+        
+        while not found && index < string.Length do
+            if
+                substrings
+                |> List.exists (fun substring ->
+                    not (isNull substring) && index + substring.Length <= string.Length && string.Substring(index, substring.Length) = substring
+                )
+            then
+                found <- true
+            else
+                index <- index + 1
+        
+        if found then index else -1
 
 /// Reports the zero-based index of the last occurrence of the specified substring within the specified string.
 let lastIndexOf (substring: string) (string: string) =
@@ -173,7 +175,8 @@ let replaceAll (replacements: #seq<string * string>) (string: string) =
         let buffer = StringBuilder string
 
         for key, value in replacements do
-            buffer.Replace(key, value) |> ignore
+            if not (isNull key) then
+                buffer.Replace(key, if isNull value then "" else value) |> ignore
         
         buffer.ToString()
 
@@ -268,14 +271,14 @@ let splitAt (index: int) (string: string) =
 /// Inserts the specified value into the specified string at the given index.
 let insertAt (index: int) (value: string) (string: string) =
     if isNull string && index = 0 then
-        value
+        if isNull value then "" else value
     else
         let builder = StringBuilder()
         let index = clamp index 0 string.Length
         
         builder
             .Append(string.Substring(0, index))
-            .Append(value)
+            .Append(if isNull value then "" else value)
             .Append( string.Substring(index))
             |> ignore
             
@@ -311,7 +314,7 @@ let skip (count: int) (string: string) =
         string
     else
         string.Substring count
-      
+
 /// Returns at most the first n characters from the string.  
 let truncate (count: int) (string: string) =
     if isNull string then

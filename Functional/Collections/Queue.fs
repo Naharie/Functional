@@ -87,7 +87,7 @@ module Queue =
     let length (Queue tree) =
         FingerTree.size tree
 
-    /// Determines whether or not the queue is empty.
+    /// Determines whether the queue is empty.
     let isEmpty (Queue tree) =
         FingerTree.isEmpty tree
 
@@ -97,18 +97,6 @@ module Queue =
         |> Seq.fold (fun queue item ->
             enqueue item queue
         ) queue
-
-    /// Builds a new queue containing only the items for which the condition returned true.
-    let filter (condition: 't -> bool) (Queue tree) =
-        Queue (tree |> FingerTree.filter condition)
-
-    /// Removes all occurrences of the specified item.
-    let remove (item: 't) queue =
-        filter ((<>) item) queue
-
-    /// Builds a new queue containing the items for which the choice function returned Some.
-    let choose (chooser: 't -> 'u option) (Queue tree): 'u queue =
-        Queue (tree |> FingerTree.choose chooser)
 
     /// Applies the function to every item in the queue.
     let iter (action: 't -> unit) (Queue tree) =

@@ -7,17 +7,22 @@ open Functional
 open System.Collections
 open System.Collections.Generic
 
-/// Updates the array in place and returns it again.
-let mapInline mapping (array: 't[]) =
-    for i in 0L..(array.LongLength - 1L) do
-        array.SetValue(mapping ((array.GetValue i) :?> 't), i)
-    
-    array
-    
+// Generic
 
 /// Creates an array of arrays with the specified dimensions initialized with the specified function.
 let table inner outer initializer =
     Array.init outer (fun _ -> Array.init inner initializer)
+
+// Array specific
+
+/// Updates the array in place and returns it again.
+let mapInline mapping (array: 't[]) =    
+    for i in 0..array.Length do
+        array.SetValue(mapping array[i], i)
+    
+    array
+
+// Unsorted
 
 /// Combines map and scan.
 let mapScan action state items =
@@ -33,7 +38,7 @@ let fromUntypedEnumerator (enumerator: IEnumerator) =
     
     while enumerator.MoveNext() do
         result.Add enumerator.Current
-        
+
     result.ToArray()
 /// Converts an IEnumerator<'t> to a 't array.
 let fromEnumerator (enumerator: IEnumerator<'t>) =
@@ -62,14 +67,6 @@ let replaceWith replacement array =
         replacement item
         |> Option.defaultValue item
     )
-/// Creates a new array with the value at the specified index replaced with the specified value.
-/// If the index is out of range, then the operation does nothing.
-let updateAt index value array =
-    let result = Array.copy array
-
-    if index >= 0 && index < result.Length then
-        result[index] <- value
-    result
 
 /// Applies a function to each element and its index, threading an accumulator through the computation.
 let foldi folder state (array: 't[]) =
