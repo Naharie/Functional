@@ -101,6 +101,12 @@ let removeExtraWhitespace (text: string) =
 
         string builder
 
+/// <summary>
+/// An inverse of sprintf, it takes a format pattern and uses it to match against the specified text.
+/// </summary>
+/// <param name="format">The format string to match with.</param>
+/// <param name="text">The text to match against.</param>
+/// <returns>A tuple of the extracted values.</returns>
 let scanf (format: PrintfFormat<_,_,_,_,'t>) text : 't =
     let chunks = getChunks format.Value
     let parsers =
@@ -136,11 +142,23 @@ let scanf (format: PrintfFormat<_,_,_,_,'t>) text : 't =
         value :?> 't
     | _ ->
         FSharpValue.MakeTuple(values, typeof<'t>) :?> 't
+/// <summary>
+/// An inverse of sprintf, it takes a format pattern and uses it to match against the specified text with extra whitespace removed.
+/// </summary>
+/// <param name="format">The format string to match with.</param>
+/// <param name="text">The text to match against.</param>
+/// <returns>A tuple of the extracted values.</returns>
 let scanwf format text =
     text
     |> removeExtraWhitespace
     |> scanf format
 
+/// <summary>
+/// An inverse of sprintf, it takes a format pattern and uses it to match against the specified text.
+/// </summary>
+/// <param name="format">The format string to match with.</param>
+/// <param name="text">The text to match against.</param>
+/// <returns>A tuple of the extracted values.</returns>
 let (|Scanf|_|) (format: PrintfFormat<_,_,_,_,'t>) (text: string) =
     let chunks = getChunks format.Value
     let parsers =
@@ -184,5 +202,11 @@ let (|Scanf|_|) (format: PrintfFormat<_,_,_,_,'t>) (text: string) =
             None
     else
         None
+/// <summary>
+/// An inverse of sprintf, it takes a format pattern and uses it to match against the specified text with extra whitespace removed.
+/// </summary>
+/// <param name="format">The format string to match with.</param>
+/// <param name="text">The text to match against.</param>
+/// <returns>A tuple of the extracted values.</returns>
 let (|Scanwf|_|) format text =
     ``|Scanf|_|`` format (removeExtraWhitespace text)

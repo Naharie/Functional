@@ -2,24 +2,43 @@
 module Functional.Graphs.Graph
 open Functional
 
+/// A graph with no nodes or edges.
 let empty<'t when 't : comparison> = Graph (Set.empty): Graph<'t>
 
+/// <summary>
+/// Determines whether all edges in the graph are directed edges.
+/// </summary>
+/// <returns>True if all edges in the graph are directed, false otherwise.</returns>
 let isDirected (Graph (edges)) =
     edges
     |> Set.forall (fun (Edge (direction, _, _)) -> direction = Directed)
 
+/// <summary>
+/// Creates a new graph from a list of edges.
+/// </summary>
+/// <param name="edges">The set of edges to create the graph from.</param>
+/// <returns>A new graph formed from the list of edges.</returns>
 let fromEdges (edges: #seq<Edge<'t>>) =
     Graph (Set.ofSeq edges)
 
+/// <summary>
 /// Returns the edges of the specified graph.
+/// </summary>
+/// <returns>The edges of the specified graph.</returns>
 let getEdges (Graph edges) = edges
+/// <summary>
 /// Returns the vertices of the specified graph.
+/// </summary>
+/// <returns>The vertices of the specified graph.</returns>
 let getVertices (Graph edges) =
     edges
     |> Seq.collect(fun (Edge(_, a, b)) -> [| a; b |])
     |> Set.ofSeq
 
+/// <summary>
 /// Converts an undirected graph to a directed graph.
+/// </summary>
+/// <returns>A directed graph that is equivalent to the undirected graph that was given as input.</returns>
 let toDirect (Graph (edges): Graph<'t>) =
     let newEdges =
         edges
@@ -32,7 +51,11 @@ let toDirect (Graph (edges): Graph<'t>) =
 
     Graph (newEdges)
 
-/// Returns a mapping of nodes to a set of nodes that connect to the key node.
+/// <summary>
+/// Returns a mapping from each node to the nodes that connect to it.
+/// </summary>
+/// <param name="graph">The graph to fetch the nodes from.</param>
+/// <returns>A mapping from each node to the nodes that connect to it.</returns>
 let getIncoming (graph: Graph<'t>) =
     let vertices = getVertices graph
     let edges = getEdges graph
@@ -64,7 +87,11 @@ let getIncoming (graph: Graph<'t>) =
         |> Map.tryAdd vertex Set.empty
     ) connections
 
-/// Returns a mapping of nodes to their neighbors.
+/// <summary>
+/// Returns a mapping from each node to the nodes that it connects to.
+/// </summary>
+/// <param name="graph">The graph to fetch the nodes from.</param>
+/// <returns>A mapping from each node to the nodes that it connects to.</returns>
 let getOutgoing (graph: Graph<'t>) =
     let vertices = getVertices graph
     let edges = getEdges graph
@@ -96,7 +123,11 @@ let getOutgoing (graph: Graph<'t>) =
         |> Map.tryAdd vertex Set.empty
     ) connections
 
-/// Returns a list of all vertices that can be reached with a single step from the specified vertex.
+/// <summary>
+/// Returns a list of all neighboring vertices that can be reached in a single step.
+/// </summary>
+/// <param name="vertex">The vertex to find the neighbors of.</param>
+/// <returns>A list of all neighboring vertices that can be reached in a single step.</returns>
 let getAdjacentVertices(Graph edges, vertex) =
     edges
     |> Set.toList
@@ -110,8 +141,12 @@ let getAdjacentVertices(Graph edges, vertex) =
         | Undirected -> None
     )
 
+/// <summary>
 /// Returns a topological sort of the specified graph.
 /// If the graph is cyclic then the function returns an empty list.
+/// </summary>
+/// <param name="graph">The graph to perform a topological sort on.</param>
+/// <returns>An array of vertices in topological order or an empty list if the graph was cyclic.</returns>
 let topologicalSort (graph : Graph<'t>) =
     let vertices = getVertices graph
     let connections = getIncoming graph
@@ -156,8 +191,15 @@ let topologicalSort (graph : Graph<'t>) =
         |> Array.rev
         |> Array.collect id
 
-// Shamelessly stolen and ported from wikipedia.
+/// <summary>
 /// Computes the shortest possible path from one vertex in the graph to another vertex in the graph.
+/// </summary>
+/// <param name="heuristic">A function that estimates the cost of reaching a given node.</param>
+/// <param name="weight">The cost of traversing a given edge.</param>
+/// <param name="start">The starting vertex.</param>
+/// <param name="goal">The ending vertex.</param>
+/// <param name="graph">The graph to traverse.</param>
+/// <returns>The shortest possible path from the starting vertex to the ending vertex or ValueNone if there is no such path.</returns>
 let a_star heuristic (weight: 't -> 't -> int) start goal (graph: Graph<'t>) =
     let neighborMap = getOutgoing graph
 
