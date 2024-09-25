@@ -422,7 +422,7 @@ let item index (string: string) =
     if isNull string then
         nullArg (nameof string)
     elif index < 0 || index > string.Length then
-        raise (IndexOutOfRangeException $"{nameof index} must be greater than zero and less than the length of the string.")
+        raise (IndexOutOfRangeException $"{nameof index} must be greater than or equal to zero and less than the length of the string.")
     else
         string[index]
 

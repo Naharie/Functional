@@ -1,6 +1,6 @@
 namespace Functional.ComputationBuilders
 
-/// Represents a intermediate computation in a computation expression.
+/// Represents an intermediate computation in a computation expression.
 type Computation<'t> =
     | Value of 't
     | Future of (unit -> 't Computation)

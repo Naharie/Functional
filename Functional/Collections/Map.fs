@@ -1,12 +1,22 @@
 [<RequireQualifiedAccess>]
 module Functional.Map
 
-/// Returns a new map that contains all the pairs from both maps, where keys from the second map overwrite those from map 1.
+/// Returns a new map that contains all the pairs from both maps, where keys from the second map overwrite those from the first.
 let merge (map1: Map<_, _>) (map2: Map<_, _>) =
-    map1
-    |> Map.fold (fun map key value ->
+    Map.fold (fun map key value ->
         map |> Map.add key value
-    ) map2
+    ) map1 map2
+
+/// Returns a new map that contains all the pairs from both maps, where conflicts are resolved by the specified merger function.
+let mergeWith (merger: 't -> 't -> 't) (map1: Map<_, _>) (map2: Map<_, _>) =
+    Map.fold (fun map key value ->
+        match map |> Map.tryFind key with
+        | Some existingValue ->
+            map |> Map.add key (merger existingValue value)
+        | None ->
+            map |> Map.add key value
+
+    ) map1 map2
 
 /// Returns a new map that contains all the key value pairs from all the maps in the sequence.
 /// Keys from maps later in the sequence overwrite those from earlier maps.

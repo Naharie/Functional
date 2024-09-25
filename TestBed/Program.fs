@@ -1,2 +1,7 @@
-﻿open Functional
-open Functional.Graphs
+﻿open Main
+
+[<EntryPoint>]
+let main (args: string[]) =
+    code()
+    
+    0

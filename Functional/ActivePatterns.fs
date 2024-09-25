@@ -9,5 +9,5 @@ let (|Default|) ``default value`` ``optional value`` =
 let (|Pair|) value input = value, input
 
 /// Equality represented as an active pattern.
-/// Useful when matching against non trivial value representations, such as big integers.
+/// Useful when matching against non-trivial value representations, such as big integers.
 let (|Is|) value input = value = input

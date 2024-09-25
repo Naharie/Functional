@@ -1,6 +1,12 @@
 [<RequireQualifiedAccess>]
 module Functional.Option
 
+/// Inverts the specified option, filling in newValue in the case of Some.
+let invert newValue option =
+    match option with
+    | Some _ -> None
+    | None -> Some newValue
+
 /// Returns the result of the function wrapped in Some if it succeeds, and None if the function throws an error.
 let attempt func =
     try Some <| func ()

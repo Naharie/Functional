@@ -19,22 +19,6 @@ let mapInline mapping (array: 't[]) =
 let table inner outer initializer =
     Array.init outer (fun _ -> Array.init inner initializer)
 
-/// Maps the given action over an array of arrays.
-let mapTable action table =
-    table
-    |> Array.map (
-        Array.map action
-    )
-/// Maps the given action over a table, passing in a tuple of the row and column numbers.
-let mapTablei action table =
-    table
-    |> Array.mapi (fun rowNumber row ->
-        row
-        |> Array.map (fun columnNumber ->
-            action (rowNumber, columnNumber)
-        )
-    )
-
 /// Combines map and scan.
 let mapScan action state items =
     items
@@ -45,28 +29,25 @@ let mapScanBack action state items =
 
 /// Converts an untyped IEnumerator to an object array.
 let fromUntypedEnumerator (enumerator: IEnumerator) =
-    Array.unfold (fun () ->
-        if enumerator.MoveNext() then
-            Some (enumerator.Current, ())
-        else
-            None
-    ) ()
+    let result = ResizeArray()
+    
+    while enumerator.MoveNext() do
+        result.Add enumerator.Current
+        
+    result.ToArray()
 /// Converts an IEnumerator<'t> to a 't array.
 let fromEnumerator (enumerator: IEnumerator<'t>) =
-    Array.unfold (fun () ->
-        if enumerator.MoveNext() then
-            Some (enumerator.Current, ())
-        else
-            None
-    ) ()
+    let result = ResizeArray()
+    
+    while enumerator.MoveNext() do
+        result.Add enumerator.Current
+        
+    result.ToArray()
 
 /// Converts a loose collection like XmlNodeList
-let inline fromLooseCollection< ^c, ^t when ^c : (member Count: int) and ^c : (member Item: int -> ^t) > (collection: ^c) =
+let inline fromCollectionLike< ^c, ^t when ^c : (member Count: int) and ^c : (member Item: int -> ^t) > (collection: ^c) =
     let count = (^c : (member Count: int) collection)
-    
-    Array.init count (fun index ->
-        (^c : (member Item: int -> ^t) (collection, index))
-    )
+    Array.init count (fun index -> (^c : (member Item: int -> ^t) (collection, index)))
 
 /// Replaces the specified value 'before' with the value 'after'.
 let replace before after array =
@@ -85,7 +66,21 @@ let replaceWith replacement array =
 /// If the index is out of range, then the operation does nothing.
 let updateAt index value array =
     let result = Array.copy array
-    result[index] <- value
+
+    if index >= 0 && index < result.Length then
+        result[index] <- value
+    result
+
+/// Applies a function to each element and its index, threading an accumulator through the computation.
+let foldi folder state (array: 't[]) =
+    ensureNotNull "array" array
+
+    let f = OptimizedClosures.FSharpFunc<_, _, _, _>.Adapt(folder)
+    let mutable result = state
+
+    for i = 0 to array.Length - 1 do
+        result <- f.Invoke(i, result, array.[i])
+
     result
 
 /// Applies the specified folding function to the array as long as the state is not None.
@@ -353,7 +348,7 @@ let choosei predicate array =
 let without (item: 't) (array: 't[]) =
     array
     |> Array.filter ((<>) item)
-/// Removes the item a the specified index (if it is within the array).
+/// Removes the item at the specified index (if it is within the array).
 let removeAt (index: int) (array: 't[]) =
     if index < 0 || index >= array.Length then
         Array.copy array
@@ -389,7 +384,7 @@ let insertions x items =
 
 /// Swaps the specified two items of the array.
 /// If either index is out of bounds than the operation does nothing.
-// This version mutably updates the passed in array.
+/// This version mutably updates the passed in array.
 let swapInline a b items =
     let length = Array.length items
 
@@ -456,7 +451,7 @@ let splitBy (rule: 't -> bool) (sequence: 't[]) =
 
 /// Splits the input sequence based on the specified rule function.
 /// The item that is split on is included in the results as the first item of each section.
-let chunkBy (rule: 't -> bool) (sequence: 't[]) =
+let chunkByFirst (rule: 't -> bool) (sequence: 't[]) =
     [
         let buffer = ResizeArray()
 
@@ -475,7 +470,7 @@ let chunkBy (rule: 't -> bool) (sequence: 't[]) =
 
 /// Splits the input sequence based on the specified rule function.
 /// The item that is split on is included in the results as the last item of each section.
-let chunkBy2 (rule: 't -> bool) (sequence: 't[]) =
+let chunkByLast (rule: 't -> bool) (sequence: 't[]) =
     [|
         let buffer = ResizeArray()
 
@@ -508,8 +503,10 @@ let separateBy (rule: 't -> bool) (sequence: 't[]) =
         if group.Count > 0 then
             yield group.ToArray()
     |]
-    
 
+/// Collapses an array according to the specified rule.
+/// All pairs which the rule returns Some(combinedValue) are replaced by combinedValue.
+/// This happens recursively for any new pairs created by the merging of a previous pair.
 let collapse (rule: 't -> 't -> 't option) array =
     if Array.isEmpty array then
         Array.empty
@@ -530,13 +527,9 @@ let collapse (rule: 't -> 't -> 't option) array =
 
             yield state
         |]
-        
+
 /// Counts the number of items that match the specified rule.
 let count rule (array: 't[]) =
     let mutable count = 0
-    
-    for item in array do
-        if rule item then
-            count <- count + 1
-    
+    for item in array do if rule item then count <- count + 1
     count

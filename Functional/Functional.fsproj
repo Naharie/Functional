@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="Checks.fs" />
         <Compile Include="Lazy.fs" />
         <Compile Include="ActivePatterns.fs" />
         <Compile Include="Purity.fs" />
@@ -44,6 +45,7 @@
         <Compile Include="ComputationBuilders\ComputationBuilders.fs" />
         <Compile Include="ComputationBuilders\Maybe.fs" />
         <Compile Include="ComputationBuilders\Result.fs" />
+        <Compile Include="ComputationBuilders\Imperative.fs" />
         <Compile Include="ComputationBuilders\Prelude.fs" />
         
         <Compile Include="Graphs\Graph.Types.fs" />

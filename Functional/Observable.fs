@@ -14,10 +14,13 @@ let watch (observer: (unit -> unit) -> IObserver<'t>) (observable: IObservable<'
 
 /// Attaches a handler to the observable that waits for the next value and then unsubscribes.
 let once (handler: 't -> unit) observable =
+    let mutable alive = true
+    
     withRecursive (fun (subscription) ->
         Observable.subscribe (fun value ->
-            if not subscription.IsValueCreated then
-                subscription.Value.Dispose()
+            if alive then
                 handler value
+                alive <- false
+                subscription.Value.Dispose()
         ) observable
     )
