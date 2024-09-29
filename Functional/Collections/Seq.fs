@@ -4,6 +4,12 @@ module Functional.Seq
 open System.Collections
 open System.Collections.Generic
 
+// Generic
+
+// Specific
+
+// Unsorted
+
 /// Creates a sequence of sequences with the specified dimensions initialized with the specified function.
 let table inner outer initializer =
     Seq.init outer (fun _ -> Seq.init inner initializer)
@@ -265,10 +271,6 @@ let choosei predicate sequence =
 let without (item: 't) (sequence: #seq<'t>) =
     sequence
     |> Seq.filter ((<>) item)
-/// Removes the item a the specified index (if it is within the sequence).
-let removeAt (index: int) (sequence: #seq<'t>) =
-    sequence
-    |> filteri (fun current _ -> current <> index)
 
 /// Adds the item to the beginning of the collection.
 let prependItem (item: 't) (sequence: #seq<'t>) =
@@ -299,13 +301,16 @@ let insertions x items =
         )
     )
 
+let replicateInfinite element =
+    seq { while true do yield element }
+
+let repeat count (elements: #seq<'t>) =
+    seq { for _ in 1..count do yield! elements }
+
 /// Results in P0, P1, PLast, P0, P1, ....
-/// Example: Seq.cycle([ 1; 2; 3 ]) ==> seq { 1; 2; 3; 1; 2; 3; ... }
-let cycle (elements: #seq<'t>) =
-    seq {
-        while true do
-            yield! elements
-    }
+/// Example: Seq.repeatInfinite([ 1; 2; 3 ]) ==> seq { 1; 2; 3; 1; 2; 3; ... }
+let repeatInfinite (elements: #seq<'t>) =
+    seq { while true do yield! elements }
 
 // Returns all pairs where both items are from unique indexes.
 let pairs sequence =

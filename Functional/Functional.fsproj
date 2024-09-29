@@ -8,8 +8,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Exceptions\NoValidItemException.fs" />
-        <Compile Include="Errors.fs" />
+        <Compile Include="Exceptions\NoSuchItemException.fs" />
+        <Compile Include="Errors\Errors.fs" />
+        <Compile Include="Errors\CollectionErrors.fs" />
         
         <Compile Include="Checks.fs" />
         <Compile Include="Lazy.fs" />

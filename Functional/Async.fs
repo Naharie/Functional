@@ -67,7 +67,7 @@ let fail error : 't Async =
 /// If none of the computations return, then None is returned instead.
 /// </summary>
 /// <param name="computations">A set of computations from which the result of the first computation to complete will be returned.</param>
-/// <returns>The result of the first computation to complete, or None if no computation completes succesfully.</returns>
+/// <returns>The result of the first computation to complete, or None if no computation completes successfully.</returns>
 let tryFirst (computations: #seq<Async<'t>>) =
     computations
     |> Seq.map (map Some)
@@ -80,7 +80,7 @@ let tryFirst (computations: #seq<Async<'t>>) =
 /// <param name="computations">A set of computations from which the result of the first computation to complete will be returned.</param>
 /// <returns>The result of the first computation to complete.</returns>
 /// <exception cref="Functional.Exceptions.NoValidItemException">None of the specified computations successfully completed and returned a value.</exception>
-let first (computations: #seq<Async<'t>>) =    
+let first (computations: #seq<Async<'t>>) =
     computations
     |> Seq.map (map Some)
     |> Async.Choice
@@ -90,7 +90,7 @@ let first (computations: #seq<Async<'t>>) =
             | Some result ->
                 return result
             | None ->
-                noValidItems "All asynchronous computations failed to return a value."
+                noSuchItem "All of the asynchronous computations in the input sequence failed to return a value."
                 return Unchecked.defaultof<'t>
         }
     )

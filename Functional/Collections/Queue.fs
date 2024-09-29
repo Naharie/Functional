@@ -22,7 +22,7 @@ with
     /// The number of items in the queue.
     member this.Count =
         let (Queue tree) = this
-        tree.Size
+        tree.Length
 
     /// Returns a friendly representation of the queue as a string.
     override this.ToString () = this.AsString
@@ -38,7 +38,7 @@ with
         /// The number of items in the queue.
         member this.Count =
             let (Queue tree) = this
-            tree.Size
+            tree.Length
 
 type Queue<'t> = queue<'t>
 
@@ -48,7 +48,7 @@ module Queue =
 
     /// Adds the specified item to the end of the queue.
     let enqueue (item: 't) (Queue tree) =
-        Queue (FingerTree.appendLeft item tree)
+        Queue (FingerTree.insertLeft item tree)
 
     /// Attempts to remove the first item from the front of the queue.
     let rec dequeue (Queue tree) =
@@ -85,7 +85,7 @@ module Queue =
 
     /// Returns the length of the queue.
     let length (Queue tree) =
-        FingerTree.size tree
+        FingerTree.length tree
 
     /// Determines whether the queue is empty.
     let isEmpty (Queue tree) =

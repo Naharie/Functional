@@ -8,7 +8,7 @@ let empty<'t when 't : comparison> = Graph (Set.empty): Graph<'t>
 /// <summary>
 /// Determines whether all edges in the graph are directed edges.
 /// </summary>
-/// <returns>True if all edges in the graph are directed, false otherwise.</returns>
+/// <returns>True if all edges in the graph are directed.</returns>
 let isDirected (Graph (edges)) =
     edges
     |> Set.forall (fun (Edge (direction, _, _)) -> direction = Directed)

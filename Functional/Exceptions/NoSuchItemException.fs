@@ -8,7 +8,7 @@ open System.Collections.Generic
 /// </summary>
 /// <param name="message">The error message that explains the reason for the exception.</param>
 /// <param name="innerException">The exception that is the cause of the current exception.</param>
-type NoValidItemException(message: string, innerException: Exception) =
+type NoSuchItemException(message: string, innerException: Exception) =
     inherit KeyNotFoundException(message, innerException)
     
-    new(message) = NoValidItemException(message, null)
+    new(message) = NoSuchItemException(message, null)

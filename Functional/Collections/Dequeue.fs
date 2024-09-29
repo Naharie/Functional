@@ -21,7 +21,7 @@ with
     /// The number of items in the dequeue.
     member this.Count =
         let (Dequeue tree) = this
-        tree.Size
+        tree.Length
     /// Returns a friendly representation of the dequeue as a string.
     override this.ToString () = this.AsString
 
@@ -36,7 +36,7 @@ with
         /// The number of items in the queue.
         member this.Count =
             let (Dequeue tree) = this
-            tree.Size
+            tree.Length
 
 type Dequeue<'t> = dequeue<'t>
 
@@ -70,7 +70,7 @@ module Dequeue =
 
     /// Returns the length of the dequeue.
     let length (dequeue: 't dequeue) =
-        apply FingerTree.size dequeue
+        apply FingerTree.length dequeue
 
     /// Determines whether or not the dequeue is empty.
     let isEmpty (dequeue: 't dequeue) =
@@ -78,10 +78,10 @@ module Dequeue =
 
     /// Appends an item to the left (front) of the dequeue.
     let appendLeft (item: 't) (dequeue: 't dequeue) =
-        Dequeue (apply (FingerTree.appendLeft item) dequeue)
+        Dequeue (apply (FingerTree.insertLeft item) dequeue)
     /// Appends an item to the right (back) of the dequeue.
     let appendRight (item: 't) (dequeue: 't dequeue) =
-        Dequeue (apply (FingerTree.appendRight item) dequeue)
+        Dequeue (apply (FingerTree.insertRight item) dequeue)
 
     /// Attempts to peek at the leftmost item.
     let peekLeft (dequeue: 't dequeue) =

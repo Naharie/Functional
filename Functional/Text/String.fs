@@ -14,7 +14,7 @@ let empty = String.Empty
 /// Indicates whether the specified string is either null or an empty string.
 /// </summary>
 /// <param name="value">The string to test.</param>
-/// <returns>True if the specified string is either null or an empty string, false otherwise.</returns>
+/// <returns>True if the specified string is either null or an empty string.</returns>
 let inline isNullOrEmpty value =
     String.IsNullOrEmpty value
 
@@ -22,7 +22,7 @@ let inline isNullOrEmpty value =
 /// Indicates whether the specified string is either null or consists entirely of whitespace characters.
 /// </summary>
 /// <param name="value">The string to est.</param>
-/// <returns>True if specified string is either null or consists entirely of whitespace characters, false otherwise.</returns>
+/// <returns>True if specified string is either null or consists entirely of whitespace characters.</returns>
 let inline isNullOrWhitespace value =
     String.IsNullOrWhiteSpace value
 
@@ -39,7 +39,7 @@ let inline emptyOnNull value =
 /// </summary>
 /// <param name="substring">The substring to search for.</param>
 /// <param name="string">The string to search in.</param>
-/// <returns>True if a specified substring occurs within a specified string, false otherwise.</returns>
+/// <returns>True if a specified substring occurs within a specified string.</returns>
 let contains substring (string: string) =
     if isNull string || isNull substring then
         false
@@ -63,7 +63,7 @@ let inline compare (comparision: StringComparison) a b =
 /// </summary>
 /// <param name="substring">The string to search for.</param>
 /// <param name="string">The string to search within.</param>
-/// <returns>True if the start of the specified string instances matches the specified substring, false otherwise.</returns>
+/// <returns>True if the start of the specified string instances matches the specified substring.</returns>
 let startsWith substring (string: string) =
     if isNullOrEmpty substring then
         true
@@ -78,7 +78,7 @@ let startsWith substring (string: string) =
 /// <param name="index">The index to check.</param>
 /// <param name="substring">The string to search for.</param>
 /// <param name="string">The string to search within.</param>
-/// <returns>True if the specified substring occurs within the text at the specified index, false otherwise.</returns>
+/// <returns>True if the specified substring occurs within the text at the specified index.</returns>
 let containsAtIndex index (substring: string) (string: string) =
     if isNullOrEmpty substring then
         true
@@ -93,7 +93,7 @@ let containsAtIndex index (substring: string) (string: string) =
 /// <param name="comparision">The string comparison kind to use.</param>
 /// <param name="substring">The string to look for..</param>
 /// <param name="string">The string to look within..</param>
-/// <returns>True if the start of the specified string instances matches the specified substring when compared using the specified comparision option, false otherwise.</returns>
+/// <returns>True if the start of the specified string instances matches the specified substring when compared using the specified comparision option.</returns>
 /// <exception cref="System.ArgumentException">The provided comparison method is not a valid <see cref="System.StringComparison"/> value.</exception>
 /// <exception cref="System.NotSupportedException">The provided comparison method is not supported.</exception>
 let startsWithComparision comparision substring (string: string) =
@@ -109,7 +109,7 @@ let startsWithComparision comparision substring (string: string) =
 /// </summary>
 /// <param name="substring">The string to search for.</param>
 /// <param name="string">The string to search within.</param>
-/// <returns>True if the end of the specified string instances matches the specified substring, false otherwise.</returns>
+/// <returns>True if the end of the specified string instances matches the specified substring.</returns>
 let endsWith substring (string: string) =
     if isNull substring then
         true
@@ -124,7 +124,7 @@ let endsWith substring (string: string) =
 /// <param name="comparision">The string comparison kind to use.</param>
 /// <param name="substring">The string to look for..</param>
 /// <param name="string">The string to look within..</param>
-/// <returns>True the end of the specified string instances matches the specified substring when compared using the specified comparision option, false otherwise.</returns>
+/// <returns>True the end of the specified string instances matches the specified substring when compared using the specified comparision option.</returns>
 /// <exception cref="System.ArgumentException">The provided comparison method is not a valid <see cref="System.StringComparison"/> value.</exception>
 /// <exception cref="System.NotSupportedException">The provided comparison method is not supported.</exception>
 let endsWithComparision comparision substring (string: string) =
@@ -141,7 +141,7 @@ let endsWithComparision comparision substring (string: string) =
 /// <param name="comparision">The string comparison kind to use.</param>
 /// <param name="a">The first string to compare.</param>
 /// <param name="b">The second string to compare.</param>
-/// <returns>True if the specified strings are equal when compared using the specified comparision options, false otherwise.</returns>
+/// <returns>True if the specified strings are equal when compared using the specified comparision options.</returns>
 /// <exception cref="System.ArgumentException">The provided comparison method is not a valid <see cref="System.StringComparison"/> value.</exception>
 /// <exception cref="System.NotSupportedException">The provided comparison method is not supported.</exception>
 let equals comparision a b =
@@ -760,5 +760,5 @@ let rev (text: string) =
 /// Determines if the string is a palindrome or not.
 /// </summary>
 /// <param name="text">The string to check.</param>
-/// <returns>True if the string is a plaindrome, false otherwise.</returns>
+/// <returns>True if the string is a plaindrome.</returns>
 let isPalindrome (text: string) = text = rev text

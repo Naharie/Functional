@@ -9,16 +9,49 @@ open System.Collections.Generic
 
 // Generic
 
-/// Creates an array of arrays with the specified dimensions initialized with the specified function.
-let table inner outer initializer =
-    Array.init outer (fun _ -> Array.init inner initializer)
+/// <summary>
+/// Returns the first element of the array or <c>ValueNone</c> if the array is empty.
+/// </summary>
+/// <param name="array">The input array.</param>
+/// <returns>The first element of the array or <c>ValueNone</c> if the array is empty.</returns>
+let tryHeadV (array: 't[]) =
+    if array.Length = 0 then ValueNone
+    else ValueSome array[0]
 
-// Array specific
+/// <summary>
+/// Returns the index of the last item for which the predicate returns true or <c>ValueNone</c> if there is no such item.
+/// </summary>
+/// <param name="predicate">The function to evaluate each item with.</param>
+/// <param name="array">The input array.</param>
+/// <returns>The index of the last item for which the predicate returns true or <c>ValueNone</c> if there is no such item.</returns>
+let tryFindIndexBackV predicate (array: 't[]) =
+    let rec loop index =
+        if index < 0 then
+            ValueNone
+        elif predicate array[index] then
+            ValueSome index
+        else
+            loop (index - 1)
+    
+    loop (array.Length - 1)
+
+// tryHeadV, tryFindV, tryFindBackV, tryFindIndexV, tryLastV, pickV, tryPickV, chooseV, unfoldV, tryExactlyOneV, repeat
+
+/// <summary>
+/// Creates an array of arrays with the specified number of inner and outer items and initialized with the given function.
+/// </summary>
+/// <param name="inner">The number of items in each inner array.</param>
+/// <param name="outer">The number of arrays in the outer array.</param>
+/// <param name="initializer">The initializer function.</param>
+let table inner outer initializer =
+    Array.init outer (fun row -> Array.init inner (initializer row))
+
+// Specific
 
 /// Updates the array in place and returns it again.
 let mapInline mapping (array: 't[]) =    
     for i in 0..array.Length do
-        array.SetValue(mapping array[i], i)
+        array[i] <- mapping array[i]
     
     array
 
@@ -345,17 +378,6 @@ let choosei predicate array =
 let without (item: 't) (array: 't[]) =
     array
     |> Array.filter ((<>) item)
-/// Removes the item at the specified index (if it is within the array).
-let removeAt (index: int) (array: 't[]) =
-    if index < 0 || index >= array.Length then
-        Array.copy array
-    else
-        let result = Array.zeroCreate (array.Length - 1)
-        
-        Array.Copy (array, result, index)
-        Array.Copy (array, index + 1, result, index, array.Length - index - 1)
-        
-        result
 
 /// Adds the item to the beginning of the collection.
 let prependItem (item: 't) (array: 't array) =
@@ -431,12 +453,12 @@ let pairs array =
 
 /// Splits the input sequence based on the specified rule function.
 /// The item that is split on is not included in the results.
-let splitBy (rule: 't -> bool) (sequence: 't[]) =
+let splitBy predicate (sequence: 't[]) =
     [
         let buffer = ResizeArray()
 
         for item in sequence do
-            if rule item then
+            if predicate item then
                 yield buffer.ToArray()
                 buffer.Clear()
             else
@@ -446,60 +468,34 @@ let splitBy (rule: 't -> bool) (sequence: 't[]) =
             yield buffer.ToArray()
     ]
 
-/// Splits the input sequence based on the specified rule function.
-/// The item that is split on is included in the results as the first item of each section.
-let chunkByFirst (rule: 't -> bool) (sequence: 't[]) =
+let splitByOptions options predicate (sequence: 't[]) =
     [
         let buffer = ResizeArray()
 
         for item in sequence do
-
-            if rule item then
-                yield buffer.ToArray()
-                buffer.Clear()
-                buffer.Add item
+            if predicate item then
+                match options with
+                | DoNotIncludeSeparator ->
+                    yield buffer.ToArray()
+                    buffer.Clear()
+                | IncludeSeparatorAsFirstElement ->
+                    yield buffer.ToArray()
+                    buffer.Clear()
+                    buffer.Add item
+                | IncludeSeparatorAsLastElement ->
+                    buffer.Add item
+                    yield buffer.ToArray()
+                    buffer.Clear()
+                | IncludeSeparatorAsOwnGroup ->
+                    yield buffer.ToArray()
+                    yield Array.singleton item
+                    buffer.Clear()
             else
                 buffer.Add item
 
         if buffer.Count > 0 then 
             yield buffer.ToArray()
     ]
-
-/// Splits the input sequence based on the specified rule function.
-/// The item that is split on is included in the results as the last item of each section.
-let chunkByLast (rule: 't -> bool) (sequence: 't[]) =
-    [|
-        let buffer = ResizeArray()
-
-        for item in sequence do
-            if rule item then
-                buffer.Add item
-                yield buffer.ToArray()
-                buffer.Clear()
-            else
-                buffer.Add item
-
-        if buffer.Count > 0 then 
-            yield buffer.ToArray()
-    |]
-
-/// Splits the input sequence based on the specified rule function.
-/// The item that is split on is included in the results as its own group.
-let separateBy (rule: 't -> bool) (sequence: 't[]) =
-    let group = ResizeArray()
-    
-    [|
-        for item in sequence do
-            if rule item then
-                yield group.ToArray()
-                yield [| item |]
-                group.Clear()
-             else
-                 group.Add item
-
-        if group.Count > 0 then
-            yield group.ToArray()
-    |]
 
 /// Collapses an array according to the specified rule.
 /// All pairs which the rule returns Some(combinedValue) are replaced by combinedValue.

@@ -2,6 +2,7 @@ namespace rec Functional.Collections
 
 open Functional
 open System.Collections.Generic
+open Functional.Errors.CollectionErrors
 
 type private leaf<'t> =
     | Leaf1 of 't
@@ -125,13 +126,11 @@ module Vec =
     /// <param name="vec">The vector to fetch the item from.</param>
     /// <returns>The item at the specified index.</returns>
     let item index vec =
-        let inline outOfRange() = indexOutOfRange "Index was outside the bounds of the vector."
-        
         match vec with
         | Leaf leaf -> Leaf.item index leaf
             
         | Tree(size, leftLeaf, leftRoot, rightRoot, rightLeaf) ->
-            if index < 0 || index >= size then outOfRange()
+            if index < 0 || index >= size then indexOutOfRangeMustBeWithinCollection()
             else
                 let leftLeafLength = Leaf.length leftLeaf
                 let rightLeafLength = Leaf.length rightLeaf

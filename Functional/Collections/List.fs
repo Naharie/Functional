@@ -4,6 +4,12 @@ module Functional.List
 open System.Collections
 open System.Collections.Generic
 
+// Generic
+
+// Specific
+
+// Unsorted
+
 /// Creates a list of lists with the specified dimensions initialized with the specified function.
 let table inner outer initializer =
     List.init outer (fun _ -> List.init inner initializer)
@@ -74,6 +80,7 @@ let replaceWith replacement list =
         replacement item
         |> Option.defaultValue item
     )
+
 /// Creates a new list with the value at the specified index replaced with the specified value.
 /// If the index is out of range, then the original list is returned.
 let updateAt index value list =
@@ -199,7 +206,7 @@ let findi predicate list =
 let findBacki predicate list =
     list
     |> List.toArray
-    |> Array.findBack predicate
+    |> Array.findBacki predicate
 
 /// Returns the first element for which the given predicate returns "true".
 /// If there is no such element then None is returned instead.
@@ -266,9 +273,7 @@ let filteri predicate list =
         let mutable index = 0
         
         for item in list do
-            if predicate index item then
-                yield item
-                
+            if predicate index item then yield item
             index <- index + 1
     ]
 /// Returns a new collection containing only the elements of the collection for which the given predicate returns Some;
@@ -288,26 +293,6 @@ let choosei predicate list =
 let without (item: 't) (list: 't list) =
     list
     |> List.filter ((<>) item)
-/// Removes the item a the specified index (if it is within the list).
-let removeAt (index: int) (list: 't list) =
-    if index < 0 then list
-    elif index = 0 then
-        match list with
-        | [] -> []
-        | _ :: rest -> rest
-    else
-        let original = list
-        
-        let rec remove index passed list =
-            match list with
-            | [] -> original
-            | head :: rest ->
-                if index = 0 then
-                    List.append (List.rev passed) rest
-                else
-                    remove (index - 1) (head :: passed) rest
-    
-        remove index [] list
 
 /// Adds the item to the beginning of the list.
 /// An alias for prepend and (::)
@@ -334,7 +319,7 @@ let rec permutations items =
     | x :: xs ->
         List.collect (insertions x) (permutations xs)
 
-/// Returns all the non empty direct and indirect tails of a list.
+/// Returns all the non-empty direct and indirect tails of a list.
 /// Tails [ 1; 2; 3; 4 ] ==> [ [ 1; 2; 3; 4 ]; [ 2; 3; 4 ]; [ 3; 4 ]; [ 4 ] ]
 let tails (list: 't list) =
     let rec loop tails list =
@@ -383,7 +368,7 @@ let splitBy (rule: 't -> bool) (sequence: 't list) =
 
 /// Splits the input sequence based on the specified rule function.
 /// The item that is split on is included in the results as the first item of each section.
-let chunkBy (rule: 't -> bool) (sequence: 't list) =
+let chunkByFirst (rule: 't -> bool) (sequence: 't list) =
     [
         let buffer = ResizeArray()
 
@@ -402,7 +387,7 @@ let chunkBy (rule: 't -> bool) (sequence: 't list) =
 
 /// Splits the input sequence based on the specified rule function.
 /// The item that is split on is included in the results as the last item of each section.
-let chunkBy2 (rule: 't -> bool) (sequence: 't list) =
+let chunkByLast (rule: 't -> bool) (sequence: 't list) =
     [
         let buffer = ResizeArray()
 

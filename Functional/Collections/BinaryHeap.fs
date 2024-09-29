@@ -66,7 +66,7 @@ module BinaryHeap =
         
         match heap with
         | Blank -> One pair
-        | One ((priority', _) as pair') ->
+        | One (priority', _ as pair') ->
             if compare priority priority' then
                 Node (pair, One pair')
             else
@@ -84,7 +84,7 @@ module BinaryHeap =
             else
                 Pair (a, child, One b, true)
 
-        | Pair ((priority', _) as pair', left, right, _) ->
+        | Pair (priority', _ as pair', left, right, _) ->
             let a, b =
                 if compare priority priority' then
                     pair, pair'
@@ -109,9 +109,9 @@ module BinaryHeap =
     let rec private mergeInternal kind a b =
         match b with
         | Blank -> a
-        | One ((priority', _) as pair')
-        | Node ((priority', _) as pair', _)
-        | Pair ((priority', _) as pair', _, _, _) ->
+        | One (priority', _ as pair')
+        | Node (priority', _ as pair', _)
+        | Pair (priority', _ as pair', _, _, _) ->
             match a with
             | Blank -> b
             | One pair -> insertInternal kind pair b
