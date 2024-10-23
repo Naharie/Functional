@@ -35,27 +35,55 @@ type BinaryHeap<'t> = private {
     heap: BinaryHeapInternal<'t>
 }
 with
+    /// <summary>
+    /// The extreme that this heap sorts towards.
+    /// </summary>
     member this.Kind = this.kind
     
+    /// <summary>
+    /// Whether the heap contains no elements.
+    /// </summary>
     member this.IsEmpty =
         match this.heap with
         | Blank -> true
         | One _ | Node _ | Pair _ -> false
     
-    /// True if there is room to insert another element into the tree without creating new branches.
+    /// <summary>
+    /// Whether there is room to insert another element into the tree without creating new branches.
+    /// </summary>
     member this.HasEmptySpace = this.heap.HasEmptySpace
     
     member private this.AsString = this.heap.ToString()
+    
+    override this.ToString() = this.heap.ToString()
 
 [<RequireQualifiedAccess>]
 module BinaryHeap =
+    /// <summary>
+    /// An empty binary heap that sorts towards the specified extreme.
+    /// </summary>
+    /// <param name="kind">The extreme to sort towards.</param>
+    /// <returns>An empty binary heap that sorts towards the specified extreme.</returns>
     let empty<'t> kind = { kind = kind; heap = Blank }
     
+    /// An empty binary heap that sorts towards the minimum element.
     let emptyMinHeap<'t> = { kind = MinHeap; heap = Blank }
+    /// An empty binary heap that sorts towards the maximum element.
     let emptyMaxHeap<'t> = { kind = MaxHeap; heap = Blank }
     
+    /// <summary>
+    /// Constructs a binary heap that contains the given element and sorts towards the specified extreme.
+    /// </summary>
+    /// <param name="kind">The extreme to sort towards.</param>
+    /// <param name="item">The item to contain.</param>
+    /// <returns>A binary heap that contains the given element and sorts towards the specified extreme.</returns>
     let singleton kind item = { kind = kind; heap = One item }
 
+    /// <summary>
+    /// Determines if the specified heap is empty.
+    /// </summary>
+    /// <param name="heap">The heap to check.</param>
+    /// <returns>True if the heap is empty; false otherwise.</returns>
     let isEmpty (heap: BinaryHeap<'t>) = heap.IsEmpty
 
     let rec private insertInternal kind ((priority, _) as pair) heap =
@@ -103,6 +131,13 @@ module BinaryHeap =
                 else
                     let left = insertInternal kind pair left
                     Pair (pair', left, right, left.HasEmptySpace)
+    
+    /// <summary>
+    /// Inserts the pairing of an element and it's numeric weight into the given heap.
+    /// </summary>
+    /// <param name="pair">The pair to insert.</param>
+    /// <param name="heap">The heap to insert into.</param>
+    /// <returns>The updated heap.</returns>
     let insert pair heap =
         { heap with heap = insertInternal heap.kind pair heap.heap }
     
@@ -135,12 +170,37 @@ module BinaryHeap =
                 else
                     mergeInternal kind b a
     
+    /// <summary>
+    /// Attempts to merge two heaps, returning the merged heap or <c>None</c> if the heaps are of incompatible types.
+    /// </summary>
+    /// <param name="a">The first heap to merge.</param>
+    /// <param name="b">The second heap to merge.</param>
+    /// <returns>The merged heap or <c>None</c> if the heaps are of incompatible types.</returns>
     let tryMerge a b =
         if a.kind = b.kind then
             Some { kind = a.kind; heap = mergeInternal a.kind a.heap b.heap }
         else
             None
     
+    /// <summary>
+    /// Attempts to merge two heaps, returning the merged heap or <c>ValueNone</c> if the heaps are of incompatible types.
+    /// </summary>
+    /// <param name="a">The first heap to merge.</param>
+    /// <param name="b">The second heap to merge.</param>
+    /// <returns>The merged heap or <c>ValueNone</c> if the heaps are of incompatible types.</returns>
+    let tryMergeV a b =
+        if a.kind = b.kind then
+            ValueSome { kind = a.kind; heap = mergeInternal a.kind a.heap b.heap }
+        else
+            ValueNone
+    
+    /// <summary>
+    /// Computes the merger of two heaps.
+    /// </summary>
+    /// <param name="a">The first heap to merge.</param>
+    /// <param name="b">The second heap to merge.</param>
+    /// <returns>The merged heap.</returns>
+    /// <exception cref="System.InvalidOperationException">The two heaps are of incompatible types.</exception>
     let merge a b =
         if a.kind <> b.kind then
             invalidOp "Can not merge two heaps that sort by different methods!"
@@ -151,20 +211,20 @@ module BinaryHeap =
     /// Throws an exception if the heap is empty.
     /// Should only be used in cases where the heap can be guaranteed to not be empty.
     /// Returns the first item in order, whether that be the minimum or the maximum as defined by the heap kind.
-    let minOrMax heap =
+    let extreme heap =
         match heap.heap with
-        | Blank -> invalidOp "Can not fetch the minimum/maximum element of an empty heap."
+        | Blank -> invalidOp "Can not fetch the extreme element of an empty heap."
         | One (_, v)
         | Node ((_, v), _)
         | Pair ((_, v), _, _, _) -> v
-    let tryMinOrMax heap =
+    let tryExtreme heap =
         match heap.heap with
         | Blank -> None
         | One (_, v)
         | Node ((_, v), _)
         | Pair ((_, v), _, _, _) ->
             Some v
-    let removeMinOrMax heap =
+    let removeExtreme heap =
         {
             kind = heap.kind
             heap =
@@ -174,8 +234,8 @@ module BinaryHeap =
                 | Pair (_, left, right, _) -> mergeInternal heap.kind left right
         }
 
-    let popMinOrMax heap =
-        tryMinOrMax heap, removeMinOrMax heap
+    let popExtreme heap =
+        tryExtreme heap, removeExtreme heap
         
     let ofList kind pairs =
         {
@@ -190,6 +250,6 @@ module BinaryHeap =
             if heap.IsEmpty then
                 List.rev items
             else
-                build (minOrMax heap :: items) (removeMinOrMax heap)
+                build (extreme heap :: items) (removeExtreme heap)
         
         build [] heap

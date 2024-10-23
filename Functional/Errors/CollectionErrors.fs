@@ -10,7 +10,7 @@ open Functional.Exceptions
 let inline invalidArgCollectionWasEmpty () = raise (ArgumentException "The input collection was empty.")
 
 /// <summary>
-/// Raises an IndexOutOfRangeException with a default message (index must be >= 0 and <= size of collection).
+/// Raises an IndexOutOfRangeException with a default message (index must be &gt;= 0 and &lt;= size of collection).
 /// </summary>
 /// <exception cref="System.IndexOutOfRangeException">The exception being raised.</exception>
 let inline indexOutOfRangeMustBeWithinCollection () = indexOutOfRange "The index must be non-negative and less than the size of the collection."

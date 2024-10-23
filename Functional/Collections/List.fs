@@ -211,16 +211,16 @@ let findBacki predicate list =
 /// Returns the first element for which the given predicate returns "true".
 /// If there is no such element then None is returned instead.
 let tryFindi predicate list =
-    let rec find index list =
+    let rec go index list =
         match list with
         | [] -> None
         | item :: rest ->
             if predicate index item then
                 Some item
             else
-                find (index + 1) rest
+                go (index + 1) rest
 
-    find 0 list
+    go 0 list
 
 /// Returns the last element for which the given predicate returns "true".
 /// If there is no such element then None is returned instead.
@@ -234,7 +234,7 @@ let tryFindBacki predicate list =
 let picki predicate list =
     let rec pick index list =
         match list with
-        | [] -> raise (KeyNotFoundException "An element matching the predicate was not found in the list.")
+        | [] -> raise (KeyNotFoundException "An element matching the predicate was not found in the collection.")
         | item :: rest ->
             match predicate index item with
             | Some v -> v
