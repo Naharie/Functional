@@ -7,35 +7,41 @@ open Functional
 open System.Collections
 open System.Collections.Generic
 
+// Specific
+
+/// <summary>
+/// Applies the mapping function to each element in the array, mutating the original array and updating it with each resulting value.
+/// </summary>
+/// <param name="mapping">The mapping to apply to each element.</param>
+/// <param name="array">The array to read and write to.</param>
+/// <returns>The updated array.</returns>
+let mapInline mapping (array: 't[]) =
+    ensureNotNull (nameof array) array
+    
+    for i in 0..array.Length do
+        array[i] <- mapping array[i]
+    
+    array
+
 // Generic
 
 /// <summary>
-/// Returns the first element of the array or <c>ValueNone</c> if the array is empty.
+/// Returns an array that repeats the given values <c>count</c> times.
 /// </summary>
-/// <param name="array">The input array.</param>
-/// <returns>The first element of the array or <c>ValueNone</c> if the array is empty.</returns>
-let tryHeadV (array: 't[]) =
-    if array.Length = 0 then ValueNone
-    else ValueSome array[0]
-
-/// <summary>
-/// Returns the index of the last item for which the predicate returns true or <c>ValueNone</c> if there is no such item.
-/// </summary>
-/// <param name="predicate">The function to evaluate each item with.</param>
-/// <param name="array">The input array.</param>
-/// <returns>The index of the last item for which the predicate returns true or <c>ValueNone</c> if there is no such item.</returns>
-let tryFindIndexBackV predicate (array: 't[]) =
-    let rec loop index =
-        if index < 0 then
-            ValueNone
-        elif predicate array[index] then
-            ValueSome index
-        else
-            loop (index - 1)
+/// <param name="count">The number of times to repeat the values.</param>
+/// <param name="array">The values to repeat.</param>
+/// <returns>An array that repeats the given values <c>count</c> times.</returns>
+/// <exception cref="System.ArgumentException"><c>count</c> is less than zero.</exception>
+let repeat count (array: 't[]) =
+    ensureNonNegative (nameof count) count
+    ensureNotNull (nameof array) array
     
-    loop (array.Length - 1)
-
-// tryHeadV, tryFindV, tryFindBackV, tryFindIndexV, tryLastV, pickV, tryPickV, chooseV, unfoldV, tryExactlyOneV, repeat
+    let output = Array.zeroCreate (count * array.Length)
+    
+    for i in 0..(count - 1) do
+        Array.Copy(array, 0, output, i * array.Length, array.Length)
+    
+    output
 
 /// <summary>
 /// Creates an array of arrays with the specified number of inner and outer items and initialized with the given function.
@@ -43,66 +49,75 @@ let tryFindIndexBackV predicate (array: 't[]) =
 /// <param name="inner">The number of items in each inner array.</param>
 /// <param name="outer">The number of arrays in the outer array.</param>
 /// <param name="initializer">The initializer function.</param>
+/// <exception cref="System.ArgumentException"><c>inner</c> was less than zero.</exception>
+/// <exception cref="System.ArgumentException"><c>outer</c> was less than zero.</exception>
 let table inner outer initializer =
+    ensureNonNegative (nameof inner) inner
+    ensureNonNegative (nameof outer) outer
+    
     Array.init outer (fun row -> Array.init inner (initializer row))
 
-// Specific
-
-/// Updates the array in place and returns it again.
-let mapInline mapping (array: 't[]) =    
-    for i in 0..array.Length do
-        array[i] <- mapping array[i]
-    
+/// <summary>
+/// Applies the mapping function to each element of the array, threading an accumulator through the computation, building a new array containing pairs of the state the and the mapped item.
+/// </summary>
+/// <param name="mapping">The mapping to apply.</param>
+/// <param name="state">The initial starting state.</param>
+/// <param name="array">The input array.</param>
+/// <returns>The resulting array.</returns>
+let mapScan mapping (state: 'state) (array: 't[]) =
     array
+    |> Array.scan (fun (state, _) -> mapping state) (state, Unchecked.defaultof<'t>)
+/// <summary>
+/// Applies the mapping function to each element of the array in reverse order, threading an accumulator through the computation, building a new array containing pairs of the state the and the mapped item.
+/// </summary>
+/// <param name="mapping">The mapping to apply.</param>
+/// <param name="state">The initial starting state.</param>
+/// <param name="items">The array to apply the function to.</param>
+/// <returns>The resulting array.</returns>
+let mapScanBack mapping state items =
+    Array.scanBack (fun item (state, _) -> mapping item state) items (state, Unchecked.defaultof<'t>)
 
-// Unsorted
-
-/// Combines map and scan.
-let mapScan action state items =
-    items
-    |> Array.scan (fun (state, _) -> action state) (state, Unchecked.defaultof<'t>)
-/// Combines map and scanBack.
-let mapScanBack action state items =
-    Array.scanBack (fun item (state, _) -> action item state) items (state, Unchecked.defaultof<'t>)
-
-/// Converts an untyped IEnumerator to an object array.
+/// <summary>
+/// Converts an untyped <c>IEnumerator</c> in an array of objects.
+/// </summary>
+/// <param name="enumerator">The enumerator to convert.</param>
+/// <returns>The resulting array.</returns>
 let fromUntypedEnumerator (enumerator: IEnumerator) =
-    let result = ResizeArray()
-    
-    while enumerator.MoveNext() do
-        result.Add enumerator.Current
-
-    result.ToArray()
-/// Converts an IEnumerator<'t> to a 't array.
+    [| while enumerator.MoveNext() do yield enumerator.Current |]
+/// <summary>
+/// Converts an <c>IEnumerator&lt;'t&gt;</c> to an array of 't.
+/// </summary>
+/// <param name="enumerator">The enumerator to convert.</param>
 let fromEnumerator (enumerator: IEnumerator<'t>) =
-    let result = ResizeArray()
-    
-    while enumerator.MoveNext() do
-        result.Add enumerator.Current
-        
-    result.ToArray()
+    [| while enumerator.MoveNext() do yield enumerator.Current |]
 
-/// Converts a loose collection like XmlNodeList
-let inline fromCollectionLike< ^c, ^t when ^c : (member Count: int) and ^c : (member Item: int -> ^t) > (collection: ^c) =
-    let count = (^c : (member Count: int) collection)
-    Array.init count (fun index -> (^c : (member Item: int -> ^t) (collection, index)))
+/// <summary>
+/// Converts an object that acts like a collection (that is, has <c>Count</c> and <c>Item</c> defined) to an array.
+/// </summary>
+/// <param name="collection">The collection to convert.</param>
+/// <returns>The resulting array.</returns>
+let inline fromCollection< ^c, ^t when ^c : (member Count: int) and ^c : (member Item: int -> ^t) > (collection: ^c) =
+    Array.init collection.Count collection.Item
 
-/// Replaces the specified value 'before' with the value 'after'.
+/// <summary>
+/// Replaces all instances of <c>before</c> in the array with <c>after</c>.
+/// </summary>
+/// <param name="before">The value to replace.</param>
+/// <param name="after">The value to replace with.</param>
+/// <param name="array">The input array.</param>
+/// <returns>The resulting array.</returns>
 let replace before after array =
     array
     |> Array.map (fun value -> if value = before then after else value)
 
-/// Acting as a combination of map and choose, the resulting collection contains the elements from the original array for which the replacement function returned none.
-/// If the replacement function returned Some(x) instead, then the value of x replaces the original element from the collection.
-let replaceWith replacement array =
-    array
-    |> Array.map (fun item ->
-        replacement item
-        |> Option.defaultValue item
-    )
-
+/// <summary>
 /// Applies a function to each element and its index, threading an accumulator through the computation.
-let foldi folder state (array: 't[]) =
+/// </summary>
+/// <param name="folder">The function to compute each state given the last.</param>
+/// <param name="state">The initial starting state.</param>
+/// <param name="array">The input array.</param>
+/// <returns>The resulting state.</returns>
+let foldi folder (state: 'state) (array: 't[]) =    
     ensureNotNull "array" array
 
     let f = OptimizedClosures.FSharpFunc<_, _, _, _>.Adapt(folder)
@@ -113,37 +128,61 @@ let foldi folder state (array: 't[]) =
 
     result
 
-/// Applies the specified folding function to the array as long as the state is not None.
-let foldWhile folder state array =
-    let rec loop (state: 'state) index =
+/// <summary>
+/// Applies the specified folding function to each element of the array as long as the state is not <c>Done</c>.
+/// </summary>
+/// <param name="folder">The function to generate each state given the previous state.</param>
+/// <param name="state">The initial state.</param>
+/// <param name="array">The input array.</param>
+/// <returns>The resulting state.</returns>
+let foldWhile folder (state: 'state) (array: 't[]) =
+    ensureNotNull (nameof array) array
+    
+    let rec go (state: 'state) index =
         if index >= Array.length array then
             state
         else
-            let newState = folder state array[index]
+            let status, newState = folder state array[index]
 
-            match newState with
-            | Done value -> value
-            | Continue state -> 
-                loop state (index + 1)
+            match status with
+            | Done -> newState
+            | Continue -> 
+                go newState (index + 1)
 
-    loop state 0
-/// Applies the specified folding function to the array as long as the state is not None.
-let foldBackWhile folder array state =
+    go state 0
+/// <summary>
+/// Applies the specified folding function to each element of the array in reverse order as long as the state is not <c>Done</c>.
+/// </summary>
+/// <param name="folder">The function to generate each state given the previous state.</param>
+/// <param name="state">The initial state.</param>
+/// <param name="array">The input array.</param>
+/// <returns>The resulting state.</returns>
+let foldBackWhile folder (array: 't[]) (state: 'state) =
+    ensureNotNull (nameof array) array
+    
     let rec loop state index =
         if index < 0 then
             state
         else
-            let newState = folder (Array.item index array) state
+            let status, newState = folder (Array.item index array) state
 
-            match newState with
-            | Done value -> value
-            | Continue state -> 
-                loop state (index - 1)
+            match status with
+            | Done -> newState
+            | Continue -> 
+                loop newState (index - 1)
 
     loop state (Array.length array - 1)
 
-/// Performs a standard fold unless the folding function returns none, in which case the overall function returns none.
+/// <summary>
+/// Performs a standard fold unless the folding function returns <c>None</c>, in which case the overall function returns <c>None</c>.
+/// </summary>
+/// <param name="folder">The function to generate each new state given the last.</param>
+/// <param name="state">The initial state.</param>
+/// <param name="array">The input array.</param>
+/// <returns>The resulting state.</returns>
 let tryFold folder state array =
+    ensureNotNull (nameof array) array
+    
     let rec loop (state: 'state) index =
         if index >= Array.length array then
             Some state
@@ -155,8 +194,16 @@ let tryFold folder state array =
             | None -> None
 
     loop state 0
-/// Performs a standard fold back unless the folding function returns none, in which case the overall function returns none.
+/// <summary>
+/// Performs a standard foldBack unless the folding function returns <c>None</c>, in which case the overall function returns <c>None</c>.
+/// </summary>
+/// <param name="folder">The function to generate each new state given the last.</param>
+/// <param name="state">The initial state.</param>
+/// <param name="array">The input array.</param>
+/// <returns>The resulting state.</returns>
 let tryFoldBack folder array state =
+    ensureNotNull (nameof array) array
+    
     let rec loop state index =
         if index < 0 then
             Some state
@@ -169,27 +216,42 @@ let tryFoldBack folder array state =
 
     loop state (Array.length array - 1)
 
+/// <summary>
 /// Combines fold and filter into a single function that threads the state object through the filtering process.
+/// </summary>
+/// <param name="folder">The function to generate each new state given the last.</param>
+/// <param name="state">The initial state.</param>
+/// <param name="array">The input array.</param>
+/// <returns>The resulting state.</returns>
 let thresh folder (state: 'state) (array: 't[]) =
+    ensureNotNull (nameof array) array
+    
     let mutable state = state
 
     let filtered =
         array
         |> Array.filter (fun item ->
             let keep, newState = folder state item
-
             state <- newState
             keep
         )
 
     filtered, state
+/// <summary> 
 /// Combines foldBack and filter into a single function that threads the state object through the filtering process.
+/// </summary>
+/// <param name="folder">The function to generate each new state given the last.</param>
+/// <param name="state">The initial state.</param>
+/// <param name="array">The input array.</param>
+/// <returns>The resulting state.</returns>
 let threshBack folder array state =
+    ensureNotNull (nameof array) array
+    
     let mutable state = state
     let length = Array.length array
     let mask = BitArray length
 
-    for index in length - 1..-1..0 do
+    for index in (length - 1)..(-1)..0 do
         let keep, newState = folder array[index]
         state <- newState
         mask[index] <- keep
@@ -205,22 +267,37 @@ let threshBack folder array state =
 
     filtered, state
 
+/// <summary>
 /// Combines fold and choose into a single function that threads the state object through the filtering process.
-let winnow folder state array =
+/// </summary>
+/// <param name="folder">The function to generate each new state given the last.</param>
+/// <param name="state">The initial state.</param>
+/// <param name="array">The input array.</param>
+/// <returns>The resulting state.</returns>
+let winnow folder state (array: 't[]) =
+    ensureNotNull (nameof array) array
+    
     let mutable state = state
 
-    let filtered =
-        array
-        |> Array.choose (fun item ->
+    [|
+        for item in array do
             let result, newState = folder state item
-
             state <- newState
-            result
-        )
-
-    filtered, state
+            
+            match result with
+            | Some x -> yield x
+            | None -> ()
+    |], state
+/// <summary>
 /// Combines fold and choose into a single function that threads the state object through the filtering process.
+/// </summary>
+/// <param name="folder">The function to generate each new state given the last.</param>
+/// <param name="state">The initial state.</param>
+/// <param name="array">The input array.</param>
+/// <returns>The resulting state.</returns>
 let winnowBack folder (array: 't[]) (state: 'state) =
+    ensureNotNull (nameof array) array
+    
     let mutable state = state
     let length = Array.length array
     let mask = Array.zeroCreate array.Length
@@ -232,97 +309,108 @@ let winnowBack folder (array: 't[]) (state: 'state) =
 
     (Array.choose id mask), state
 
+/// <summary>
 /// Returns the first element for which the given predicate returns "true".
-/// If there is no such element then a KeyNotFoundException is raised instead.
+/// </summary>
+/// <param name="predicate">The predicate to evaluate each item with.</param>
+/// <param name="array">The input array.</param>
+/// <returns>The first element for which the given predicate returns "true".</returns>
+/// <exception cref="Functional.NoSuchItemException">The predicate did not evaluate to true for any items.</exception>
 let findi predicate (array: 't[]) =
-    let mutable index = -1
-    let mutable go = true
+    ensureNotNull (nameof array) array
     
-    while index < array.Length && go do
-        if predicate index array[index] then
-            go <- false
+    let rec go index =
+        if index >= array.Length then
+            noSuchItem "An element matching the predicate was not found in the array."
+        elif predicate index array[index] then
+            array[index]
         else
-            index <- index + 1
-    
-    if index = array.Length then
-        raise (KeyNotFoundException "An element matching the predicate was not found in the array.")
-    else
-        array[index]
+            go (index + 1)
+        
+    go 0
 
+/// <summary>
 /// Returns the last element for which the given predicate returns "true".
-/// If there is no such element then a KeyNotFoundException is raised instead.
+/// </summary>
+/// <param name="predicate">The predicate to evaluate each item with.</param>
+/// <param name="array">The input array.</param>
+/// <returns>The first element for which the given predicate returns "true".</returns>
+/// <exception cref="Functional.NoSuchItemException">The predicate did not evaluate to true for any items.</exception>
 let findBacki predicate (array: 't[]) =
-    let mutable index = array.Length - 1
-    let mutable go = true
+    ensureNotNull (nameof array) array
     
-    while index > -1 && go do
-        if predicate index array[index] then
-            go <- false
+    let rec go index =
+        if index < 0 then
+            noSuchItem "An element matching the predicate was not found in the array."
+        elif predicate index array[index] then
+            array[index]
         else
-            index <- index - 1
-    
-    if index = -1 then
-        raise (KeyNotFoundException "An element matching the predicate was not found in the array.")
-    else
-        array[index]
+            go (index - 1)
+        
+    go (array.Length - 1)
 
-/// Returns the first element for which the given predicate returns "true".
-/// If there is no such element then None is returned instead.
+/// <summary>
+/// Returns the first element for which the given predicate returns "true" or <c>None</c> if there is no such element.
+/// </summary>
+/// <param name="predicate">The predicate to check each item with.</param>
+/// <param name="array">The input array.</param>
+/// <returns>The first element for which the given predicate returns "true" or <c>None</c> if there is no such element.</returns>
 let tryFindi predicate (array: 't[]) =
-    let mutable index = -1
-    let mutable go = true
+    ensureNotNull (nameof array) array
     
-    while index < array.Length && go do
-        if predicate index array[index] then
-            go <- false
+    let rec go index =
+        if index >= array.Length then
+            None
+        elif predicate index array[index] then
+            Some array[index]
         else
-            index <- index + 1
-    
-    if index = array.Length then
-        None
-    else
-        Some array[index]
+            go (index + 1)
+        
+    go 0
 
-/// Returns the last element for which the given predicate returns "true".
-/// If there is no such element then None is returned instead.
+/// <summary>
+/// Returns the last element for which the given predicate returns "true" or <c>None</c> if there is no such element.
+/// </summary>
+/// <param name="predicate">The predicate to check each item with.</param>
+/// <param name="array">The input array.</param>
+/// <returns>The last element for which the given predicate returns "true" or <c>None</c> if there is no such element.</returns>
 let tryFindBacki predicate (array: 't[]) =
-    let mutable index = array.Length - 1
-    let mutable go = true
+    ensureNotNull (nameof array) array
     
-    while index > -1 && go do
-        if predicate index array[index] then
-            go <- false
+    let rec go index =
+        if index < 0 then
+            None
+        elif predicate index array[index] then
+            Some array[index]
         else
-            index <- index - 1
-    
-    if index = -1 then
-        None
-    else
-        Some array[index]
+            go (index - 1)
+        
+    go (array.Length - 1)
 
-/// Returns the first element for which the given predicate returns Some x.
-/// If there is no such element then a KeyNotFoundException is raised instead.
+/// <summary>
+/// Returns the first element for which the given predicate returns <c>Some(x)</c>.
+/// </summary>
+/// <param name="chooser">The choice function to apply to each element.</param>
+/// <param name="array">The input array.</param>
+/// <exception cref="Functional.NoSuchItemException">The choice function returned <c>None</c> for all items.</exception>
 let picki (chooser: int -> 't -> 'u option) (array: 't[]) =
-    let mutable index = -1
-    let mutable go = true
-    let mutable result = Unchecked.defaultof<'u>
+    ensureNotNull (nameof array) array
     
-    while index < array.Length && go do
-        match chooser index array[index] with
-        | Some value ->
-            result <- value
-            go <- false
-        | None ->
-            index <- index + 1
+    let rec go index =
+        if index >= array.Length then
+            noSuchItem "An element matching the predicate was not found in the array."
+        else
+            match chooser index array[index] with
+            | Some value -> value
+            | None -> go (index + 1)
 
-    if index = array.Length then
-        raise (KeyNotFoundException "An element matching the predicate was not found in the array.")
-    else
-        result
+    go 0
 
 /// Returns the first element for which the given predicate returns Some x.
 /// If there is no such element then None is returned instead.
 let tryPicki (chooser: int -> 't -> 'u option) (array: 't[]) =
+    ensureNotNull (nameof array) array
+    
     let mutable index = -1
     let mutable go = true
     let mutable result = None
@@ -340,8 +428,15 @@ let tryPicki (chooser: int -> 't -> 'u option) (array: 't[]) =
     else
         result
 
-/// For each element apply the given function, concatenate all the results and returned the combined result.
+/// <summary>
+/// Returns the concatenation of the array produced by applying the mapping function to each element and its index.
+/// </summary>
+/// <param name="mapping">The mapping function to apply.</param>
+/// <param name="array">The input array.</param>
+/// <returns>The concatenation of the array produced by applying the mapping function to each element and its index.</returns>
 let collecti (mapping: int -> 't -> 'u array) (array: 't array) =
+    ensureNotNull (nameof array) array
+    
     [|
         let mutable index = 0
         
@@ -350,7 +445,12 @@ let collecti (mapping: int -> 't -> 'u array) (array: 't array) =
             index <- index + 1
     |]
 
-/// Returns a new collection containing only the elements of the collection for which the given predicate returns true.
+/// <summary>
+/// Filters the array, returning only those elements for which the predicate returned <c>true</c> when applied to said element and its index.
+/// </summary>
+/// <param name="predicate">The predicate to check pairings of elements and indexes with.</param>
+/// <param name="array">The input array.</param>
+/// <returns>Those elements for which the predicate returned <c>true</c> when applied to said element and its index.</returns>
 let filteri predicate (array: 't array) =
     [|
         let mutable index = 0
@@ -361,7 +461,12 @@ let filteri predicate (array: 't array) =
 
             index <- index + 1
     |]
-/// Returns a new collection containing only the elements of the collection for which the given predicate returns Some;
+/// <summary>
+/// Filters the array, returning only those elements for which the predicate returned <c>Some(...)</c> when applied to said element and its index.
+/// </summary>
+/// <param name="predicate">The predicate to check pairings of elements and indexes with.</param>
+/// <param name="array">The input array.</param>
+/// <returns>Those elements for which the predicate returned <c>Some(...)</c> when applied to said element and its index.</returns>
 let choosei predicate array =
     [|
         let mutable index = 0
@@ -374,105 +479,101 @@ let choosei predicate array =
             index <- index + 1
     |]
 
-/// Removes all instances of the specified item from the array.
-let without (item: 't) (array: 't[]) =
+/// <summary>
+/// Removes all instances of the specified value from the array.
+/// </summary>
+/// <param name="value">The value to remove.</param>
+/// <param name="array">The input array.</param>
+/// <returns>The input array minus all instances of the given item.</returns>
+let without (value: 't) (array: 't[]) =
     array
-    |> Array.filter ((<>) item)
+    |> Array.filter ((<>) value)
+/// <summary>
+/// Removes all instances of the given values from the array.
+/// </summary>
+/// <param name="values">The values to remove.</param>
+/// <param name="array">The input array.</param>
+/// <returns>The input array minus all instances of the given items.</returns>
+let withoutMany (values: #seq<'t>) (array: 't[]) =
+    let items = Set.ofSeq values
 
-/// Adds the item to the beginning of the collection.
-let prependItem (item: 't) (array: 't array) =
-    Array.append [| item |] array
-/// Adds the item to the end of the collection.
-let appendItem (item: 't) (array: 't array) =
-    Array.append array [| item |]
+    array
+    |> Array.filter (applyBack Set.contains items >> not)
 
-/// All possible insertions of a given item into the array.
-/// insertions 4 [ 1; 2; 3 ] -> [ 4; 1; 2; 3 ]; [ 1; 4; 2; 3 ]; [ 1; 2; 4; 3 ]; [ 1; 2; 3; 4 ]
-let insertions x items =
-    let size = Array.length items + 1
+/// <summary>
+/// Generates all possible insertions of a value into an array.
+/// </summary>
+/// <param name="value">The value to insert.</param>
+/// <param name="array">The array to insert into.</param>
+/// <returns>An array of arrays containing all possible insertions of a value into an array, where each subarray is the result of one possible insertion point.</returns>
+/// <example>
+/// Executing <c>insertions 4 [ 1; 2; 3 ]</c> would produce:
+/// <code>
+/// [|
+///     [| 4; 1; 2; 3 |]
+///     [| 1; 4; 2; 3 |]
+///     [| 1; 2; 4; 3 |]
+///     [| 1; 2; 3; 4 |]
+/// |]
+/// </code>
+/// </example>
+let insertions value array =
+    let size = Array.length array + 1
     
     Array.init size (fun insertIndex ->
         Array.init size (fun index ->
             if index = insertIndex then
-                x
+                value
             else
                 let offsetIndex = if index < insertIndex then index else index - 1
-                items[offsetIndex]
+                array[offsetIndex]
         )
     )
 
-/// Swaps the specified two items of the array.
-/// If either index is out of bounds than the operation does nothing.
-/// This version mutably updates the passed in array.
-let swapInline a b items =
-    let length = Array.length items
-
-    if a >= 0 && a < length && b >= 0 && b < length then
-        let temp = items[a]
-        items[a] <- items[b]
-        items[b] <- temp
-
-    items
-/// Swaps the specified two items of the array.
-/// If either index is out of bounds than the operation does nothing.
-let swap a b items =
-    swapInline a b (Array.copy items)
-
-/// Reverses the specified section of the array.
-/// If an index is out of bounds then it will be clamped to the closest bound.
-let reverseSectionInline start stop items =
-    let length = Array.length items
+/// <summary>
+/// Computes all possible permutations of the given values.
+/// </summary>
+/// <param name="array">The input array.</param>
+/// <returns>All possible permutations of the given values.</returns>
+let rec permutations array =
+    ensureNotNull (nameof array) array
     
-    let start = clamp start 0 (length - 1)
-    let stop = clamp stop 0 (length - 1)
+    if Array.isEmpty array then
+        [| Array.empty |]
+    else
+        let head = array[0]
+        let tail = array[1..]
 
-    let size = stop - start + 1
-    let steps = (size / 2) - (if size % 2 = 0 then 0 else 1)
+        Array.collect (insertions head) (permutations tail)
 
-    for index in 0..steps do
-        swapInline (start + index) (stop - index) items |> ignore
-    
-    items
-/// Reverses the specified section of the array.
-/// If an index is out of bounds then it will be clamped to the closest bound.
-let reverseSection start stop items =
-    reverseSectionInline start stop (Array.copy items)
-
-// Returns all pairs where both items are from unique indexes.
+/// <summary>
+/// Returns all pairs where both items are from unique indexes.
+/// </summary>
+/// <param name="array">The input array.</param>
+/// <returns>All pairs where both items are from unique indexes.</returns>
 let pairs array =
-    array
-    |> collecti (fun outerIndex a ->
-        array
-        |> choosei (fun innerIndex b ->
-            if outerIndex = innerIndex then
-                None
-            else
-                Some (a, b)
-        )
-    )
+    ensureNotNull (nameof array) array
+    
+    [|
+        for i in 0..(Array.length array - 1) do
+            for j in 0..(Array.length array - 1) do
+                if i <> j then array[i], array[j]
+    |]
 
-/// Splits the input sequence based on the specified rule function.
-/// The item that is split on is not included in the results.
-let splitBy predicate (sequence: 't[]) =
+/// <summary>
+/// Splits the input array into multiple arrays.
+/// The provided `options` parameter determines what is done with the separating element.
+/// </summary>
+/// <param name="options">What to do with the separator.</param>
+/// <param name="predicate">The predicate to determine if an element is a separator.</param>
+/// <param name="array">The array to split.</param>
+let splitByOptions options predicate (array: 't[]) =
+    ensureNotNull (nameof array) array
+    
     [
         let buffer = ResizeArray()
 
-        for item in sequence do
-            if predicate item then
-                yield buffer.ToArray()
-                buffer.Clear()
-            else
-                buffer.Add item
-
-        if buffer.Count > 0 then 
-            yield buffer.ToArray()
-    ]
-
-let splitByOptions options predicate (sequence: 't[]) =
-    [
-        let buffer = ResizeArray()
-
-        for item in sequence do
+        for item in array do
             if predicate item then
                 match options with
                 | DoNotIncludeSeparator ->
@@ -496,11 +597,25 @@ let splitByOptions options predicate (sequence: 't[]) =
         if buffer.Count > 0 then 
             yield buffer.ToArray()
     ]
+/// <summary>
+/// Splits the input array into multiple arrays.
+/// The separating element is not included as part of the results.
+/// </summary>
+/// <param name="predicate">The predicate to determine if an element is a separator.</param>
+/// <param name="array">The array to split.</param>
+let splitBy predicate (array: 't[]) = splitByOptions DoNotIncludeSeparator predicate array
 
+/// <summary>
 /// Collapses an array according to the specified rule.
-/// All pairs which the rule returns Some(combinedValue) are replaced by combinedValue.
+/// All pairs which the rule returns <c>Some(x)</c> are replaced by <c>x</c>.
 /// This happens recursively for any new pairs created by the merging of a previous pair.
+/// </summary>
+/// <param name="rule">The rule to apply to each pair of elements.</param>
+/// <param name="array">The input array.</param>
+/// <returns>The resulting array.</returns>
 let collapse (rule: 't -> 't -> 't option) array =
+    ensureNotNull (nameof array) array
+    
     if Array.isEmpty array then
         Array.empty
     else
@@ -521,8 +636,13 @@ let collapse (rule: 't -> 't -> 't option) array =
             yield state
         |]
 
-/// Counts the number of items that match the specified rule.
-let count rule (array: 't[]) =
+/// <summary>
+/// Determines the number of elements for which the predicate returns true.
+/// </summary>
+/// <param name="predicate">The predicate to check each item with.</param>
+/// <param name="array">The input array.</param>
+/// <returns>The number of elements for which the predicate returns true.</returns>
+let count predicate (array: 't[]) =
     let mutable count = 0
-    for item in array do if rule item then count <- count + 1
+    for item in array do if predicate item then count <- count + 1
     count

@@ -26,6 +26,6 @@ let inline ensureNonNegative name value =
 /// <param name="value">The value to be checked.</param>
 /// <param name="min">The minimum allowed value (inclusive).</param>
 /// <param name="max">The maximum allowed value (exclusive).</param>
-let inline ensureInCollection name value min max =
+let inline ensureInRange name value min max =
     if value < min || value >= max then
         invalidArg name $"%s{name} must be greater than or equal to %O{min} and less than ${max}."
