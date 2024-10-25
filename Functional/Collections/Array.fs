@@ -15,6 +15,7 @@ open System.Collections.Generic
 /// <param name="mapping">The mapping to apply to each element.</param>
 /// <param name="array">The array to read and write to.</param>
 /// <returns>The updated array.</returns>
+/// <exception cref="System.NullArgumentException">The input array was null.</exception>
 let mapInline mapping (array: 't[]) =
     ensureNotNull (nameof array) array
     
@@ -32,6 +33,7 @@ let mapInline mapping (array: 't[]) =
 /// <param name="array">The values to repeat.</param>
 /// <returns>An array that repeats the given values <c>count</c> times.</returns>
 /// <exception cref="System.ArgumentException"><c>count</c> is less than zero.</exception>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let repeat count (array: 't[]) =
     ensureNonNegative (nameof count) count
     ensureNotNull (nameof array) array
@@ -64,6 +66,7 @@ let table inner outer initializer =
 /// <param name="state">The initial starting state.</param>
 /// <param name="array">The input array.</param>
 /// <returns>The resulting array.</returns>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let mapScan mapping (state: 'state) (array: 't[]) =
     array
     |> Array.scan (fun (state, _) -> mapping state) (state, Unchecked.defaultof<'t>)
@@ -72,16 +75,18 @@ let mapScan mapping (state: 'state) (array: 't[]) =
 /// </summary>
 /// <param name="mapping">The mapping to apply.</param>
 /// <param name="state">The initial starting state.</param>
-/// <param name="items">The array to apply the function to.</param>
+/// <param name="array">The array to apply the function to.</param>
 /// <returns>The resulting array.</returns>
-let mapScanBack mapping state items =
-    Array.scanBack (fun item (state, _) -> mapping item state) items (state, Unchecked.defaultof<'t>)
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
+let mapScanBack mapping state array =
+    Array.scanBack (fun item (state, _) -> mapping item state) array (state, Unchecked.defaultof<'t>)
 
 /// <summary>
 /// Converts an untyped <c>IEnumerator</c> in an array of objects.
 /// </summary>
 /// <param name="enumerator">The enumerator to convert.</param>
 /// <returns>The resulting array.</returns>
+/// <exception cref="System.NullArgumentException"><c>enumerator</c> was null.</exception>
 let fromUntypedEnumerator (enumerator: IEnumerator) =
     [| while enumerator.MoveNext() do yield enumerator.Current |]
 /// <summary>
@@ -106,6 +111,7 @@ let inline fromCollection< ^c, ^t when ^c : (member Count: int) and ^c : (member
 /// <param name="after">The value to replace with.</param>
 /// <param name="array">The input array.</param>
 /// <returns>The resulting array.</returns>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let replace before after array =
     array
     |> Array.map (fun value -> if value = before then after else value)
@@ -117,6 +123,7 @@ let replace before after array =
 /// <param name="state">The initial starting state.</param>
 /// <param name="array">The input array.</param>
 /// <returns>The resulting state.</returns>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let foldi folder (state: 'state) (array: 't[]) =    
     ensureNotNull "array" array
 
@@ -135,6 +142,7 @@ let foldi folder (state: 'state) (array: 't[]) =
 /// <param name="state">The initial state.</param>
 /// <param name="array">The input array.</param>
 /// <returns>The resulting state.</returns>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let foldWhile folder (state: 'state) (array: 't[]) =
     ensureNotNull (nameof array) array
     
@@ -157,6 +165,7 @@ let foldWhile folder (state: 'state) (array: 't[]) =
 /// <param name="state">The initial state.</param>
 /// <param name="array">The input array.</param>
 /// <returns>The resulting state.</returns>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let foldBackWhile folder (array: 't[]) (state: 'state) =
     ensureNotNull (nameof array) array
     
@@ -180,6 +189,7 @@ let foldBackWhile folder (array: 't[]) (state: 'state) =
 /// <param name="state">The initial state.</param>
 /// <param name="array">The input array.</param>
 /// <returns>The resulting state.</returns>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let tryFold folder state array =
     ensureNotNull (nameof array) array
     
@@ -201,6 +211,7 @@ let tryFold folder state array =
 /// <param name="state">The initial state.</param>
 /// <param name="array">The input array.</param>
 /// <returns>The resulting state.</returns>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let tryFoldBack folder array state =
     ensureNotNull (nameof array) array
     
@@ -223,6 +234,7 @@ let tryFoldBack folder array state =
 /// <param name="state">The initial state.</param>
 /// <param name="array">The input array.</param>
 /// <returns>The resulting state.</returns>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let thresh folder (state: 'state) (array: 't[]) =
     ensureNotNull (nameof array) array
     
@@ -244,6 +256,7 @@ let thresh folder (state: 'state) (array: 't[]) =
 /// <param name="state">The initial state.</param>
 /// <param name="array">The input array.</param>
 /// <returns>The resulting state.</returns>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let threshBack folder array state =
     ensureNotNull (nameof array) array
     
@@ -274,6 +287,7 @@ let threshBack folder array state =
 /// <param name="state">The initial state.</param>
 /// <param name="array">The input array.</param>
 /// <returns>The resulting state.</returns>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let winnow folder state (array: 't[]) =
     ensureNotNull (nameof array) array
     
@@ -295,6 +309,7 @@ let winnow folder state (array: 't[]) =
 /// <param name="state">The initial state.</param>
 /// <param name="array">The input array.</param>
 /// <returns>The resulting state.</returns>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let winnowBack folder (array: 't[]) (state: 'state) =
     ensureNotNull (nameof array) array
     
@@ -316,6 +331,7 @@ let winnowBack folder (array: 't[]) (state: 'state) =
 /// <param name="array">The input array.</param>
 /// <returns>The first element for which the given predicate returns "true".</returns>
 /// <exception cref="Functional.NoSuchItemException">The predicate did not evaluate to true for any items.</exception>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let findi predicate (array: 't[]) =
     ensureNotNull (nameof array) array
     
@@ -336,6 +352,7 @@ let findi predicate (array: 't[]) =
 /// <param name="array">The input array.</param>
 /// <returns>The first element for which the given predicate returns "true".</returns>
 /// <exception cref="Functional.NoSuchItemException">The predicate did not evaluate to true for any items.</exception>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let findBacki predicate (array: 't[]) =
     ensureNotNull (nameof array) array
     
@@ -355,6 +372,7 @@ let findBacki predicate (array: 't[]) =
 /// <param name="predicate">The predicate to check each item with.</param>
 /// <param name="array">The input array.</param>
 /// <returns>The first element for which the given predicate returns "true" or <c>None</c> if there is no such element.</returns>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let tryFindi predicate (array: 't[]) =
     ensureNotNull (nameof array) array
     
@@ -374,6 +392,7 @@ let tryFindi predicate (array: 't[]) =
 /// <param name="predicate">The predicate to check each item with.</param>
 /// <param name="array">The input array.</param>
 /// <returns>The last element for which the given predicate returns "true" or <c>None</c> if there is no such element.</returns>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let tryFindBacki predicate (array: 't[]) =
     ensureNotNull (nameof array) array
     
@@ -393,6 +412,7 @@ let tryFindBacki predicate (array: 't[]) =
 /// <param name="chooser">The choice function to apply to each element.</param>
 /// <param name="array">The input array.</param>
 /// <exception cref="Functional.NoSuchItemException">The choice function returned <c>None</c> for all items.</exception>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let picki (chooser: int -> 't -> 'u option) (array: 't[]) =
     ensureNotNull (nameof array) array
     
@@ -408,6 +428,7 @@ let picki (chooser: int -> 't -> 'u option) (array: 't[]) =
 
 /// Returns the first element for which the given predicate returns Some x.
 /// If there is no such element then None is returned instead.
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let tryPicki (chooser: int -> 't -> 'u option) (array: 't[]) =
     ensureNotNull (nameof array) array
     
@@ -434,6 +455,7 @@ let tryPicki (chooser: int -> 't -> 'u option) (array: 't[]) =
 /// <param name="mapping">The mapping function to apply.</param>
 /// <param name="array">The input array.</param>
 /// <returns>The concatenation of the array produced by applying the mapping function to each element and its index.</returns>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let collecti (mapping: int -> 't -> 'u array) (array: 't array) =
     ensureNotNull (nameof array) array
     
@@ -451,7 +473,10 @@ let collecti (mapping: int -> 't -> 'u array) (array: 't array) =
 /// <param name="predicate">The predicate to check pairings of elements and indexes with.</param>
 /// <param name="array">The input array.</param>
 /// <returns>Those elements for which the predicate returned <c>true</c> when applied to said element and its index.</returns>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let filteri predicate (array: 't array) =
+    ensureNotNull (nameof array) array
+    
     [|
         let mutable index = 0
         
@@ -467,7 +492,10 @@ let filteri predicate (array: 't array) =
 /// <param name="predicate">The predicate to check pairings of elements and indexes with.</param>
 /// <param name="array">The input array.</param>
 /// <returns>Those elements for which the predicate returned <c>Some(...)</c> when applied to said element and its index.</returns>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let choosei predicate array =
+    ensureNotNull (nameof array) array
+    
     [|
         let mutable index = 0
         
@@ -485,7 +513,10 @@ let choosei predicate array =
 /// <param name="value">The value to remove.</param>
 /// <param name="array">The input array.</param>
 /// <returns>The input array minus all instances of the given item.</returns>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let without (value: 't) (array: 't[]) =
+    ensureNotNull (nameof array) array
+    
     array
     |> Array.filter ((<>) value)
 /// <summary>
@@ -494,7 +525,12 @@ let without (value: 't) (array: 't[]) =
 /// <param name="values">The values to remove.</param>
 /// <param name="array">The input array.</param>
 /// <returns>The input array minus all instances of the given items.</returns>
+/// <exception cref="System.NullArgumentException"><c>values</c> was null.</exception>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let withoutMany (values: #seq<'t>) (array: 't[]) =
+    ensureNotNull (nameof array) array
+    ensureNotNull (nameof values) values
+    
     let items = Set.ofSeq values
 
     array
@@ -517,7 +553,10 @@ let withoutMany (values: #seq<'t>) (array: 't[]) =
 /// |]
 /// </code>
 /// </example>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let insertions value array =
+    ensureNotNull (nameof array) array
+    
     let size = Array.length array + 1
     
     Array.init size (fun insertIndex ->
@@ -535,6 +574,7 @@ let insertions value array =
 /// </summary>
 /// <param name="array">The input array.</param>
 /// <returns>All possible permutations of the given values.</returns>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let rec permutations array =
     ensureNotNull (nameof array) array
     
@@ -551,6 +591,7 @@ let rec permutations array =
 /// </summary>
 /// <param name="array">The input array.</param>
 /// <returns>All pairs where both items are from unique indexes.</returns>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let pairs array =
     ensureNotNull (nameof array) array
     
@@ -567,6 +608,7 @@ let pairs array =
 /// <param name="options">What to do with the separator.</param>
 /// <param name="predicate">The predicate to determine if an element is a separator.</param>
 /// <param name="array">The array to split.</param>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let splitByOptions options predicate (array: 't[]) =
     ensureNotNull (nameof array) array
     
@@ -603,6 +645,7 @@ let splitByOptions options predicate (array: 't[]) =
 /// </summary>
 /// <param name="predicate">The predicate to determine if an element is a separator.</param>
 /// <param name="array">The array to split.</param>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let splitBy predicate (array: 't[]) = splitByOptions DoNotIncludeSeparator predicate array
 
 /// <summary>
@@ -613,6 +656,7 @@ let splitBy predicate (array: 't[]) = splitByOptions DoNotIncludeSeparator predi
 /// <param name="rule">The rule to apply to each pair of elements.</param>
 /// <param name="array">The input array.</param>
 /// <returns>The resulting array.</returns>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let collapse (rule: 't -> 't -> 't option) array =
     ensureNotNull (nameof array) array
     
@@ -642,7 +686,10 @@ let collapse (rule: 't -> 't -> 't option) array =
 /// <param name="predicate">The predicate to check each item with.</param>
 /// <param name="array">The input array.</param>
 /// <returns>The number of elements for which the predicate returns true.</returns>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let count predicate (array: 't[]) =
+    ensureNotNull (nameof array) array
+    
     let mutable count = 0
     for item in array do if predicate item then count <- count + 1
     count
