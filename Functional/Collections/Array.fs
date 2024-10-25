@@ -60,7 +60,7 @@ let table inner outer initializer =
     Array.init outer (fun row -> Array.init inner (initializer row))
 
 /// <summary>
-/// Applies the mapping function to each element of the array, threading an accumulator through the computation, building a new array containing pairs of the state the and the mapped item.
+/// Applies the mapping function to each element of the array, threading an accumulator through the computation, building a new array containing pairs of the state and the mapped item.
 /// </summary>
 /// <param name="mapping">The mapping to apply.</param>
 /// <param name="state">The initial starting state.</param>
