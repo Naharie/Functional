@@ -8,9 +8,9 @@ let inline FromInt32 number =
         match number with
         | 0 -> total
         | n when n < 0 ->
-            total - LanguagePrimitives.GenericOne
+            build (total - LanguagePrimitives.GenericOne) (number + 1)
         | n when n > 0 ->
-            total + LanguagePrimitives.GenericOne
+            build (total + LanguagePrimitives.GenericOne) (number - 1)
 
         // Only here to make the compiler happy.
         | _ -> total
@@ -22,9 +22,9 @@ let inline FromInt64 number =
         match number with
         | 0L -> total
         | n when n < 0L ->
-            total - LanguagePrimitives.GenericOne
+            build (total - LanguagePrimitives.GenericOne) (number + 1L)
         | n when n > 0L ->
-            total + LanguagePrimitives.GenericOne
+            build (total + LanguagePrimitives.GenericOne) (number - 1L)
 
         // Only here to make the compiler happy.
         | _ -> total
