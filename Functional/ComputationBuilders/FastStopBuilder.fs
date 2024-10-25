@@ -45,25 +45,21 @@ type ImperativeBuilder() =
             handler()
     )
 
-    member this.Using (resource: #IDisposable, body: 'e -> _ Imperative) =
-        this.TryFinally(
-            (body resource),
-            (fun () ->
-                match resource with
-                | null -> ()
-                | disposable -> disposable.Dispose()
-            )
-        )
+    member this.Using (resource: #IDisposable, body: 'e -> _ Imperative) = (fun () ->
+        use _ = resource
+        body resource
+    )
         
     member this.While (condition, body: _ Imperative) =
-        if not <| condition() then this.Zero()
-        else
+        if condition() then
             (fun () ->
                 match body() with 
                 | Returned v  -> Returned v
                 | StoppedIteration -> DidNotReturn
                 | DidNotReturn | SkippedIteration -> this.While(condition, body)()
             )
+        else
+            this.Zero()
     member this.For (sequence: seq<_>, body) =
         this.Using (
             sequence.GetEnumerator (),
