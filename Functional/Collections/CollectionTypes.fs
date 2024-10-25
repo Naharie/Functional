@@ -1,8 +1,7 @@
 namespace Functional
 
-type FoldStatus<'t> =
-    | Done of 't
-    | Continue of 't
+[<Struct>]
+type FoldStatus = Done | Continue
 
 [<Struct>]
 type CollectionSplitOptions =

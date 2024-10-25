@@ -26,7 +26,7 @@
         <Compile Include="Functions\Lifted.fs" />
         <Compile Include="Functions\Utilities.fs" />
 
-        <Compile Include="Numbers\GenericNumber.fs" />
+        <Compile Include="Numbers\GenericLiteral.fs" />
         <Compile Include="Numbers\Binary.fs" />
         <Compile Include="Numbers\Math.fs" />
         <Compile Include="Numbers\Prelude.fs" />
@@ -43,9 +43,11 @@
         <Compile Include="Collections\Dictionary.fs" />
         <Compile Include="Collections\BinaryHeap.fs" />
         <Compile Include="Collections\FingerTree.fs" />
+        <Compile Include="Collections\FingerTreeModule.fs" />
         <Compile Include="Collections\Queue.fs" />
         <Compile Include="Collections\Dequeue.fs" />
         <Compile Include="Collections\Vector.fs" />
+        <Compile Include="Collections\VectorModule.fs" />
 
         <Compile Include="ComputationBuilders\ComputationBuilders.fs" />
         <Compile Include="ComputationBuilders\Maybe.fs" />

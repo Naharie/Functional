@@ -72,15 +72,6 @@ let replace before after list =
     list
     |> List.map (fun value -> if value = before then after else value)
 
-/// Acting as a combination of map and choose, the resulting collection contains the elements from the original list for which the replacement function returned none.
-/// If the replacement function returned Some(x) instead, then the value of x replaces the original element from the collection.
-let replaceWith replacement list =
-    list
-    |> List.map (fun item ->
-        replacement item
-        |> Option.defaultValue item
-    )
-
 /// Creates a new list with the value at the specified index replaced with the specified value.
 /// If the index is out of range, then the original list is returned.
 let updateAt index value list =
