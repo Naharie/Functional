@@ -10,7 +10,7 @@ open System.Collections.Generic
 // Specific
 
 /// <summary>
-/// Applies the mapping function to each element in the array, mutating the original array and updating it with each resulting value.
+/// Applies the mapping function to each element, mutating the original array and updating it with each resulting value.
 /// </summary>
 /// <param name="mapping">The mapping to apply to each element.</param>
 /// <param name="array">The array to read and write to.</param>
@@ -27,7 +27,7 @@ let mapInline mapping (array: 't[]) =
 // Generic
 
 /// <summary>
-/// Returns an array that repeats the given values <c>count</c> times.
+/// Repeats the given values <c>count</c> times.
 /// </summary>
 /// <param name="count">The number of times to repeat the values.</param>
 /// <param name="array">The values to repeat.</param>
@@ -46,10 +46,10 @@ let repeat count (array: 't[]) =
     output
 
 /// <summary>
-/// Creates an array of arrays with the specified number of inner and outer items and initialized with the given function.
+/// Creates an table with the specified number of inner and outer items and initialized with the given function.
 /// </summary>
-/// <param name="inner">The number of items in each inner array.</param>
-/// <param name="outer">The number of arrays in the outer array.</param>
+/// <param name="inner">The number of items in each row.</param>
+/// <param name="outer">The number of rows.</param>
 /// <param name="initializer">The initializer function.</param>
 /// <exception cref="System.ArgumentException"><c>inner</c> was less than zero.</exception>
 /// <exception cref="System.ArgumentException"><c>outer</c> was less than zero.</exception>
@@ -60,7 +60,7 @@ let table inner outer initializer =
     Array.init outer (fun row -> Array.init inner (initializer row))
 
 /// <summary>
-/// Applies the mapping function to each element of the array, threading an accumulator through the computation, building a new array containing pairs of the state and the mapped item.
+/// Applies the mapping function to each element, threading an accumulator through the computation, returning pairs of the state and the mapped items.
 /// </summary>
 /// <param name="mapping">The mapping to apply.</param>
 /// <param name="state">The initial starting state.</param>
@@ -71,11 +71,11 @@ let mapScan mapping (state: 'state) (array: 't[]) =
     array
     |> Array.scan (fun (state, _) -> mapping state) (state, Unchecked.defaultof<'t>)
 /// <summary>
-/// Applies the mapping function to each element of the array in reverse order, threading an accumulator through the computation, building a new array containing pairs of the state the and the mapped item.
+/// Applies the mapping function to each element in reverse order, threading an accumulator through the computation, returning pairs of the state and the mapped items.
 /// </summary>
 /// <param name="mapping">The mapping to apply.</param>
 /// <param name="state">The initial starting state.</param>
-/// <param name="array">The array to apply the function to.</param>
+/// <param name="array">The input array..</param>
 /// <returns>The resulting array.</returns>
 /// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let mapScanBack mapping state array =
@@ -88,12 +88,16 @@ let mapScanBack mapping state array =
 /// <returns>The resulting array.</returns>
 /// <exception cref="System.NullArgumentException"><c>enumerator</c> was null.</exception>
 let fromUntypedEnumerator (enumerator: IEnumerator) =
+    ensureNotNull (nameof enumerator) enumerator
     [| while enumerator.MoveNext() do yield enumerator.Current |]
 /// <summary>
 /// Converts an <c>IEnumerator&lt;'t&gt;</c> to an array of 't.
 /// </summary>
 /// <param name="enumerator">The enumerator to convert.</param>
+/// <returns>The resulting list.</returns>
+/// /// <exception cref="System.NullArgumentException"><c>enumerator</c> was null.</exception>
 let fromEnumerator (enumerator: IEnumerator<'t>) =
+    ensureNotNull (nameof enumerator) enumerator
     [| while enumerator.MoveNext() do yield enumerator.Current |]
 
 /// <summary>
@@ -134,9 +138,27 @@ let foldi folder (state: 'state) (array: 't[]) =
         result <- f.Invoke(i, result, array.[i])
 
     result
+/// <summary>
+/// Applies a function to each element and its index in reverse order, threading an accumulator through the computation.
+/// </summary>
+/// <param name="folder">The function to compute each state given the last.</param>
+/// <param name="state">The initial starting state.</param>
+/// <param name="array">The input array.</param>
+/// <returns>The resulting state.</returns>
+/// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
+let foldBacki folder (state: 'state) (array: 't[]) =    
+    ensureNotNull "array" array
+
+    let f = OptimizedClosures.FSharpFunc<_, _, _, _>.Adapt(folder)
+    let mutable result = state
+
+    for i = array.Length - 1 downto 0 do
+        result <- f.Invoke(i, result, array.[i])
+
+    result
 
 /// <summary>
-/// Applies the specified folding function to each element of the array as long as the state is not <c>Done</c>.
+/// Applies the specified folding function to each element as long as the state is not <c>Done</c>.
 /// </summary>
 /// <param name="folder">The function to generate each state given the previous state.</param>
 /// <param name="state">The initial state.</param>
@@ -159,7 +181,7 @@ let foldWhile folder (state: 'state) (array: 't[]) =
 
     go state 0
 /// <summary>
-/// Applies the specified folding function to each element of the array in reverse order as long as the state is not <c>Done</c>.
+/// Applies the specified folding function to each element in reverse order as long as the state is not <c>Done</c>.
 /// </summary>
 /// <param name="folder">The function to generate each state given the previous state.</param>
 /// <param name="state">The initial state.</param>
@@ -325,11 +347,11 @@ let winnowBack folder (array: 't[]) (state: 'state) =
     (Array.choose id mask), state
 
 /// <summary>
-/// Returns the first element for which the given predicate returns "true".
+/// Returns the first element for which the given predicate returns <c>true</c>.
 /// </summary>
 /// <param name="predicate">The predicate to evaluate each item with.</param>
 /// <param name="array">The input array.</param>
-/// <returns>The first element for which the given predicate returns "true".</returns>
+/// <returns>The first element for which the given predicate returns <c>true</c>.</returns>
 /// <exception cref="Functional.NoSuchItemException">The predicate did not evaluate to true for any items.</exception>
 /// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let findi predicate (array: 't[]) =
@@ -346,11 +368,11 @@ let findi predicate (array: 't[]) =
     go 0
 
 /// <summary>
-/// Returns the last element for which the given predicate returns "true".
+/// Returns the last element for which the given predicate returns <c>true</c>.
 /// </summary>
 /// <param name="predicate">The predicate to evaluate each item with.</param>
 /// <param name="array">The input array.</param>
-/// <returns>The first element for which the given predicate returns "true".</returns>
+/// <returns>The first element for which the given predicate returns <c>true</c>.</returns>
 /// <exception cref="Functional.NoSuchItemException">The predicate did not evaluate to true for any items.</exception>
 /// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let findBacki predicate (array: 't[]) =
@@ -367,11 +389,11 @@ let findBacki predicate (array: 't[]) =
     go (array.Length - 1)
 
 /// <summary>
-/// Returns the first element for which the given predicate returns "true" or <c>None</c> if there is no such element.
+/// Returns the first element for which the given predicate returns <c>true</c> or <c>None</c> if there is no such element.
 /// </summary>
 /// <param name="predicate">The predicate to check each item with.</param>
 /// <param name="array">The input array.</param>
-/// <returns>The first element for which the given predicate returns "true" or <c>None</c> if there is no such element.</returns>
+/// <returns>The first element for which the given predicate returns <c>true</c> or <c>None</c> if there is no such element.</returns>
 /// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let tryFindi predicate (array: 't[]) =
     ensureNotNull (nameof array) array
@@ -387,11 +409,11 @@ let tryFindi predicate (array: 't[]) =
     go 0
 
 /// <summary>
-/// Returns the last element for which the given predicate returns "true" or <c>None</c> if there is no such element.
+/// Returns the last element for which the given predicate returns <c>true</c> or <c>None</c> if there is no such element.
 /// </summary>
 /// <param name="predicate">The predicate to check each item with.</param>
 /// <param name="array">The input array.</param>
-/// <returns>The last element for which the given predicate returns "true" or <c>None</c> if there is no such element.</returns>
+/// <returns>The last element for which the given predicate returns <c>true</c> or <c>None</c> if there is no such element.</returns>
 /// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let tryFindBacki predicate (array: 't[]) =
     ensureNotNull (nameof array) array
@@ -411,6 +433,7 @@ let tryFindBacki predicate (array: 't[]) =
 /// </summary>
 /// <param name="chooser">The choice function to apply to each element.</param>
 /// <param name="array">The input array.</param>
+/// <returns>The first element for which the given predicate returns <c>Some(x)</c>.</returns>
 /// <exception cref="Functional.NoSuchItemException">The choice function returned <c>None</c> for all items.</exception>
 /// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let picki (chooser: int -> 't -> 'u option) (array: 't[]) =
@@ -428,7 +451,9 @@ let picki (chooser: int -> 't -> 'u option) (array: 't[]) =
 
 /// Returns the first element for which the given predicate returns Some x.
 /// If there is no such element then None is returned instead.
+/// <param name="array">The input array.</param>
 /// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
+/// <returns>The first element for which the given predicate returns <c>Some(x)</c> or <c>None</c> if there is no such item.</returns>
 let tryPicki (chooser: int -> 't -> 'u option) (array: 't[]) =
     ensureNotNull (nameof array) array
     
@@ -450,11 +475,11 @@ let tryPicki (chooser: int -> 't -> 'u option) (array: 't[]) =
         result
 
 /// <summary>
-/// Returns the concatenation of the array produced by applying the mapping function to each element and its index.
+/// Returns the concatenation of the arrays produced by applying the mapping function to each element and its index.
 /// </summary>
 /// <param name="mapping">The mapping function to apply.</param>
 /// <param name="array">The input array.</param>
-/// <returns>The concatenation of the array produced by applying the mapping function to each element and its index.</returns>
+/// <returns>The concatenation of the arrays produced by applying the mapping function to each element and its index.</returns>
 /// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let collecti (mapping: int -> 't -> 'u array) (array: 't array) =
     ensureNotNull (nameof array) array
@@ -468,7 +493,7 @@ let collecti (mapping: int -> 't -> 'u array) (array: 't array) =
     |]
 
 /// <summary>
-/// Filters the array, returning only those elements for which the predicate returned <c>true</c> when applied to said element and its index.
+/// Returns only those elements for which the predicate returned <c>true</c> when applied to said element and its index.
 /// </summary>
 /// <param name="predicate">The predicate to check pairings of elements and indexes with.</param>
 /// <param name="array">The input array.</param>
@@ -487,7 +512,7 @@ let filteri predicate (array: 't array) =
             index <- index + 1
     |]
 /// <summary>
-/// Filters the array, returning only those elements for which the predicate returned <c>Some(...)</c> when applied to said element and its index.
+/// Returns only those elements for which the predicate returned <c>Some(...)</c> when applied to said element and its index.
 /// </summary>
 /// <param name="predicate">The predicate to check pairings of elements and indexes with.</param>
 /// <param name="array">The input array.</param>
@@ -543,7 +568,7 @@ let withoutMany (values: #seq<'t>) (array: 't[]) =
 /// <param name="array">The array to insert into.</param>
 /// <returns>An array of arrays containing all possible insertions of a value into an array, where each subarray is the result of one possible insertion point.</returns>
 /// <example>
-/// Executing <c>insertions 4 [ 1; 2; 3 ]</c> would produce:
+/// Executing <c>insertions 4 [| 1; 2; 3 |]</c> would produce:
 /// <code>
 /// [|
 ///     [| 4; 1; 2; 3 |]
@@ -568,7 +593,6 @@ let insertions value array =
                 array[offsetIndex]
         )
     )
-
 /// <summary>
 /// Computes all possible permutations of the given values.
 /// </summary>
@@ -612,7 +636,7 @@ let pairs array =
 let splitByOptions options predicate (array: 't[]) =
     ensureNotNull (nameof array) array
     
-    [
+    [|
         let buffer = ResizeArray()
 
         for item in array do
@@ -638,7 +662,7 @@ let splitByOptions options predicate (array: 't[]) =
 
         if buffer.Count > 0 then 
             yield buffer.ToArray()
-    ]
+    |]
 /// <summary>
 /// Splits the input array into multiple arrays.
 /// The separating element is not included as part of the results.
