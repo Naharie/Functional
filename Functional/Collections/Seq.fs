@@ -87,15 +87,16 @@ let updateAt index value sequence =
 
 /// Applies the specified folding function to the sequence as long as the state is not None.
 let foldWhile folder state (sequence: #seq<_>) =
-    let enumerator = sequence.GetEnumerator()
+    use enumerator = sequence.GetEnumerator()
     
     let rec loop state =
         if enumerator.MoveNext() then
-            let newState = folder state enumerator.Current
+            let status, newState = folder state enumerator.Current
 
-            match newState with
-            | Done state -> state
-            | Continue state -> loop state
+            match status with
+            | Done -> newState
+            | Continue ->
+                loop newState
         else
             state
 

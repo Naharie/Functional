@@ -94,12 +94,12 @@ let foldWhile folder state list =
         match list with
         | [] -> state
         | item :: list ->
-            let newState = folder state item
+            let status, newState = folder state item
 
-            match newState with
-            | Done value -> value
-            | Continue state ->
-                loop state list
+            match status with
+            | Done -> newState
+            | Continue ->
+                loop newState list
 
     loop state list
 /// Applies the specified folding function to the list as long as the state is not None.
