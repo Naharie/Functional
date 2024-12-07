@@ -6,6 +6,7 @@ open Functional
 
 open System.Collections
 open System.Collections.Generic
+open Functional.Errors.CollectionErrors.PredicationOnItems
 
 // Specific
 
@@ -359,7 +360,7 @@ let findi predicate (array: 't[]) =
     
     let rec go index =
         if index >= array.Length then
-            noSuchItem "An element matching the predicate was not found in the array."
+            noMatchingItem()
         elif predicate index array[index] then
             array[index]
         else
@@ -380,7 +381,7 @@ let findBacki predicate (array: 't[]) =
     
     let rec go index =
         if index < 0 then
-            noSuchItem "An element matching the predicate was not found in the array."
+            noMatchingItem()
         elif predicate index array[index] then
             array[index]
         else
@@ -441,7 +442,7 @@ let picki (chooser: int -> 't -> 'u option) (array: 't[]) =
     
     let rec go index =
         if index >= array.Length then
-            noSuchItem "An element matching the predicate was not found in the array."
+            noMatchingItem()
         else
             match chooser index array[index] with
             | Some value -> value

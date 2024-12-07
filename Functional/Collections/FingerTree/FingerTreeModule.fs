@@ -10,7 +10,10 @@ open System.Collections
 open System.Collections.Generic
 
 open Functional
-open Functional.Errors.CollectionErrors
+open Functional.Errors.CollectionErrors.NotEnoughItems
+open Functional.Errors.CollectionErrors.NotEnoughItems.NamedIndexOutOfRange
+open Functional.Errors.CollectionErrors.PredicationOnCollection
+open Functional.Errors.CollectionErrors.PredicationOnItems
 open Functional.FingerTree.Builder
 
 /// <summary>
@@ -357,7 +360,7 @@ let popRightV (tree: FingerTree<'t>) =
 /// </summary>
 /// <param name="value">The value to insert.</param>
 /// <param name="tree">The input tree.</param>
-/// <returns>A tree containing all the the elements from the input tree with the specified value added.</returns>
+/// <returns>A tree containing all the elements from the input tree with the specified value added.</returns>
 let rec insertLeft<'t> (value: 't) (tree: FingerTree<'t>) : FingerTree<'t> =
     match tree with
     | Blank -> Single value
@@ -404,7 +407,7 @@ let rec iterBack (action: 't -> unit) (tree: FingerTree<'t>) =
         iterBack action rest
 
 /// <summary>
-/// Applies the specified function to the pair of every element in the tree and it's matching index in reverse order.
+/// Applies the specified function to the pair of every element in the tree, and it's matching index in reverse order.
 /// </summary>
 /// <param name="action">The action to apply.</param>
 /// <param name="tree">The input tree.</param>
@@ -772,7 +775,7 @@ let distinctBy projection tree =
     |> fst
 
 /// <summary>
-/// Returns the length of the tree. This function requires O(n) time, so caching the result if used repeatedly is recomended.
+/// Returns the length of the tree. This function requires O(n) time, so caching the result if used repeatedly is recommended.
 /// </summary>
 /// <param name="tree">The input tree.</param>
 /// <returns>The length of the tree.</returns>
@@ -907,7 +910,7 @@ let rec exists2 predicate tree1 tree2 =
     let rec go (predicate: OptimizedClosures.FSharpFunc<_, _, _>) tree1 tree2 =
         match viewV tree1, viewV tree2 with
         | ValueNone, ValueNone -> false
-        | ValueNone, _ | _, ValueNone  -> invalidArgNotOfEqualLength "tree"
+        | ValueNone, _ | _, ValueNone  -> notOfEqualLength "tree"
         
         | ValueSome (itemA, restA), ValueSome (itemB, restB) ->
             if predicate.Invoke (itemA, itemB) then true
@@ -937,8 +940,7 @@ let filter (condition: 't -> bool) (tree: FingerTree<'t>) =
 /// <exception cref="Functional.NoSuchItemException">Thrown if <c>predicate</c> never returns true.</exception>
 let rec find predicate tree =        
     match viewV tree with
-    | ValueNone ->
-        noSuchItem "An item satisfying the predicate was not found in the collection."
+    | ValueNone -> noMatchingItem()
     | ValueSome (item, rest) ->
         if predicate item then
             item
@@ -954,8 +956,7 @@ let rec find predicate tree =
 /// <exception cref="Functional.NoSuchItemException">Thrown if <c>predicate</c> never returns true.</exception>
 let rec findBack predicate tree = 
     match viewRevV tree with
-    | ValueNone ->
-        noSuchItem "An item satisfying the predicate was not found in the collection."
+    | ValueNone -> noMatchingItem()
     | ValueSome (item, rest) ->
         if predicate item then
             item
@@ -972,8 +973,7 @@ let rec findBack predicate tree =
 let findIndex predicate tree =
     let rec find predicate tree index =
         match viewV tree with
-        | ValueNone ->
-            noSuchItem "An item satisfying the predicate was not found in the collection."
+        | ValueNone -> noMatchingItem()
         | ValueSome (item, rest) ->
             if predicate item then
                 index
@@ -992,8 +992,7 @@ let findIndex predicate tree =
 let findIndexBack predicate tree =
     let rec find predicate tree index =
         match viewRevV tree with
-        | ValueNone ->
-            noSuchItem "An item satisfying the predicate was not found in the collection."
+        | ValueNone -> noMatchingItem()
         | ValueSome (item, rest) ->
             if predicate item then
                 index
@@ -1029,7 +1028,7 @@ let forall2 predicate tree1 tree2 =
     let rec go (predicate: OptimizedClosures.FSharpFunc<_, _, _>) tree1 tree2 =
         match viewV tree1, viewV tree2 with
         | ValueNone, ValueNone -> true
-        | ValueNone, _ | _, ValueNone -> invalidArgNotOfEqualLength "tree"
+        | ValueNone, _ | _, ValueNone -> notOfEqualLength "tree"
 
         | ValueSome (itemA, restA), ValueSome(itemB, restB) ->
             if predicate.Invoke (itemA, itemB) then
@@ -1053,7 +1052,7 @@ let fold2 folder (state: 'state) (tree1: 'a FingerTree) (tree2: 'b FingerTree) =
         match viewV tree1, viewV tree2 with
         | ValueNone, ValueNone -> state
         | ValueNone, _ | _, ValueNone ->
-            invalidArgNotOfEqualLength "tree"
+            notOfEqualLength "tree"
             
         | ValueSome (itemA, restA), ValueSome (itemB, restB) ->
             go folder (folder.Invoke (state, itemA, itemB)) restA restB
@@ -1074,7 +1073,7 @@ let foldBack2 folder tree1 tree2 (state: 'state) =
         match viewRevV tree1, viewRevV tree2 with
         | ValueNone, ValueNone -> state
         | ValueNone, _ | _, ValueNone ->
-            invalidArgNotOfEqualLength "tree"
+            notOfEqualLength "tree"
             
         | ValueSome (itemA, restA), ValueSome (itemB, restB) ->
             go folder restA restB (folder.Invoke (state, itemA, itemB))
@@ -1090,7 +1089,7 @@ let foldBack2 folder tree1 tree2 (state: 'state) =
 let head tree =
     match leftV tree with
     | ValueSome x -> x
-    | ValueNone -> invalidArgCollectionWasEmpty()
+    | ValueNone -> collectionWasEmpty()
 
 /// <summary>
 /// Applies a key-generating function to each element of a tree and yields a tree of unique keys.
@@ -1166,7 +1165,7 @@ let iter2 (action: 't1 -> 't2 -> unit) tree1 tree2 =
         match viewV tree1, viewV tree2 with
         | ValueNone, ValueNone -> ()
         | ValueNone, _ | _, ValueNone ->
-            invalidArgNotOfEqualLength "tree"
+            notOfEqualLength "tree"
             
         | ValueSome (itemA, restA), ValueSome (itemB, restB) ->
             action.Invoke(itemA, itemB)
@@ -1175,7 +1174,7 @@ let iter2 (action: 't1 -> 't2 -> unit) tree1 tree2 =
     go (OptimizedClosures.FSharpFunc<_, _, _>.Adapt action) tree1 tree2
 
 /// <summary>
-/// Applies the specified function to the pair of every element in the tree and it's matching index.
+/// Applies the specified function to the pair of every element in the tree, and it's matching index.
 /// </summary>
 /// <param name="action">The action to apply.</param>
 /// <param name="tree">The input tree.</param>
@@ -1201,7 +1200,7 @@ let iteri2 (action: int -> 't1 -> 't2 -> unit) tree1 tree2 =
         match viewV tree1, viewV tree2 with
         | ValueNone, ValueNone -> ()
         | ValueNone, _ | _, ValueNone ->
-            invalidArgNotOfEqualLength "tree"
+            notOfEqualLength "tree"
         
         | ValueSome (itemA, restA), ValueSome(itemB, restB) ->
              action.Invoke(index, itemA, itemB)
@@ -1218,7 +1217,7 @@ let iteri2 (action: int -> 't1 -> 't2 -> unit) tree1 tree2 =
 let last tree =
     match rightV tree with
     | ValueSome x -> x
-    | ValueNone -> invalidArgCollectionWasEmpty()
+    | ValueNone -> collectionWasEmpty()
 
 /// <summary>
 /// Fetches the item at the specified index.
@@ -1230,8 +1229,8 @@ let last tree =
 /// <exception cref="System.IndexOutOfRangeException">The index is less than zero or greater than the size of the tree.</exception>
 let rec item index tree =
     match tree with
-    | Blank -> indexOutOfRangeMustBeWithinCollection()
-    | Single x -> if index = 0 then x else indexOutOfRangeMustBeWithinCollection()
+    | Blank -> indexOutOfCollectionBounds()
+    | Single x -> if index = 0 then x else indexOutOfCollectionBounds()
         
     | Deep(left, _, _) ->
         match left with
@@ -1251,7 +1250,7 @@ let rec item index tree =
         
         | _ ->
             match leftV tree with
-            | ValueNone -> indexOutOfRangeMustBeWithinCollection()
+            | ValueNone -> indexOutOfCollectionBounds()
             | ValueSome value ->
                 if index = 0 then value else item (index - 1) (removeLeft tree)
 
@@ -1303,7 +1302,7 @@ let map2 mapping tree1 tree2 =
     let rec go (mapping: OptimizedClosures.FSharpFunc<_, _, _>) current tree1 tree2 =
         match viewV tree1, viewV tree2 with
         | ValueNone, ValueNone -> current
-        | ValueNone, _ | _, ValueNone -> invalidArgNotOfEqualLength "tree"
+        | ValueNone, _ | _, ValueNone -> notOfEqualLength "tree"
         
         | ValueSome (itemA, restA), ValueSome (itemB, restB) ->
             go mapping (insertRight (mapping.Invoke (itemA, itemB)) current) restA restB
@@ -1336,7 +1335,7 @@ let map3 mapping tree1 tree2 tree3 =
         match viewV tree1, viewV tree2, viewV tree3 with
         | ValueNone, ValueNone, ValueNone -> current
         | ValueNone, _, _ | _, ValueNone, _ | _, _, ValueNone ->
-            invalidArgNotOfEqualLength "tree"
+            notOfEqualLength "tree"
         | ValueSome (itemA, restA), ValueSome (itemB, restB), ValueSome (itemC, restC) ->
             go mapping (insertRight (mapping.Invoke (itemA, itemB, itemC)) current) restA restB restC
     
@@ -1347,7 +1346,7 @@ let mapi2 mapping tree1 tree2 =
         match viewV tree1, viewV tree2 with
         | ValueNone, ValueNone -> current
         | ValueNone, _ | _, ValueNone ->
-            invalidArgNotOfEqualLength "tree"
+            notOfEqualLength "tree"
         | ValueSome (itemA, restA), ValueSome (itemB, restB) ->
             go mapping (insertRight (mapping.Invoke (itemA, itemB)) current) restA restB
     
@@ -1376,7 +1375,7 @@ let mapi mapping tree =
 /// <returns>The final state.</returns>
 let reduce reduction tree =
     match viewV tree with
-    | ValueNone -> invalidArgCollectionWasEmpty()
+    | ValueNone -> collectionWasEmpty()
     | ValueSome (value, rest) ->
         fold reduction value rest
 
@@ -1468,7 +1467,7 @@ let pairwise tree =
 /// </summary>
 /// <param name="condition">The function test the input elements.</param>
 /// <param name="tree">The input tree.</param>
-/// <returns>A pair of trees, the first containing the elements the predicate evaluted to true and the second containing those evaluated to false.</returns>
+/// <returns>A pair of trees, the first containing the elements the predicate evaluated to true and the second containing those evaluated to false.</returns>
 let partition (condition: 't -> bool) (tree: FingerTree<'t>) =
     let rec partition condition evTrue evFalse tree =
         match viewV tree with
@@ -1509,14 +1508,14 @@ let permute indexMap tree =
 
 /// <summary>
 /// Applies a function to each element of the array in reverse order, threading an accumulator through the computation.
-/// If the input function is <c>f</c> and the elements are <c>i0..iN</c> then it computes <c>f i0 (... (f iN-1 iN)...)</c>.
+/// If the input function is <c>f</c> and the elements are <c>i0...iN</c> then it computes <c>f i0 (... (f iN-1 iN)...)</c>.
 /// </summary>
 /// <param name="reduction">The function to apply to each element.</param>
 /// <param name="tree">The input tree.</param>
 /// <returns>The final state.</returns>
 let reduceBack reduction tree =
     match viewRevV tree with
-    | ValueNone -> invalidArgCollectionWasEmpty()
+    | ValueNone -> collectionWasEmpty()
     | ValueSome (value, rest) ->
         foldBack reduction rest value
 
@@ -1604,17 +1603,16 @@ let rec skip count tree =
     if count = 0 then tree
     else
         match viewV tree with
-        | ValueNone ->
-            raise (ArgumentException "The number of items to skip exceeds the number of items in the collection.")
+        | ValueNone -> skipCountExceedsCollectionSize (nameof count)
         | ValueSome (_, rest) ->
             skip (count - 1) rest
 
 /// <summary>
-/// Bypasses elements in a tree while the givefn predicate returns true, and then returns the remaining elements in a new tree.
+/// Bypasses elements in a tree while the given predicate returns true, and then returns the remaining elements in a new tree.
 /// </summary>
 /// <param name="predicate">A function that evaluates each item to a boolean value.</param>
 /// <param name="tree">The input tree.</param>
-/// <returns>The created sub tree.</returns>
+/// <returns>The created subtree.</returns>
 let rec skipWhile predicate tree =
     match viewV tree with
     | ValueNone -> tree
@@ -1674,8 +1672,7 @@ let splitAt index tree =
         if index = 0 then before, tree
         else
             match viewV tree with
-            | ValueNone ->
-                invalidOp "Split index exceeds the number if items in the collection."
+            | ValueNone -> indexOutOfCollectionBounds()
             | ValueSome (item, rest) ->
                 go (index - 1) (insertRight item before) rest
         
@@ -1712,7 +1709,7 @@ let inline sum (tree: 't FingerTree) : 't when 't: (static member (+): 't * 't -
 /// <summary>
 /// Returns the sum of the results generated by applying the function to each element in the tree.
 /// </summary>
-/// <param name="projection">The function to transform each element into the type to be summ ed.</param>
+/// <param name="projection">The function to transform each element into the type to be summed.</param>
 /// <param name="tree">The input tree.</param>
 /// <returns>The resulting sum.</returns>
 let inline sumBy (projection: 't -> 'u) (tree: 't FingerTree) : 'u when 'u: (static member (+): 'u * 'u -> 'u) and 'u: (static member Zero: 'u) =
@@ -1731,7 +1728,7 @@ let take count tree =
         else
             match viewV tree with
             | ValueNone ->
-                invalidOp "The number of items to take exceeds the number of items in the collection."
+                takeCountExceedsCollectionSize (nameof count)
             | ValueSome (item, rest) ->
                 go (count - 1) (insertRight item result) rest      
     
@@ -1799,15 +1796,15 @@ let transpose (trees: #seq<'t FingerTree>) =
 /// <param name="tree">The input tree.</param>
 /// <returns>At most <c>count</c> items from the tree.</returns>
 let rec truncate count tree =
-    let rec go result count =
+    let rec go result count tree =
         if count = 0 then result
         else
             match viewV tree with
             | ValueNone -> result
             | ValueSome (x, xs) ->
-                go (insertRight x result) (count - 1)
+                go (insertRight x result) (count - 1) xs
         
-    go empty count
+    go empty count tree
 
 /// <summary>
 /// Returns the first item for which the predicate returns true or <c>None</c>.
@@ -2084,7 +2081,7 @@ let zip tree1 tree2 =
         match viewV tree1, viewV tree2 with
         | ValueNone, ValueNone -> current
         | ValueNone, _ | _, ValueNone ->
-            invalidArgNotOfEqualLength "tree"
+            notOfEqualLength "tree"
         | ValueSome (itemA, restA), ValueSome (itemB, restB) ->
             go (insertRight (itemA, itemB) current) restA restB
     
@@ -2104,7 +2101,7 @@ let zip3 tree1 tree2 tree3 =
         match viewV tree1, viewV tree2, viewV tree3 with
         | ValueNone, ValueNone, ValueNone -> current
         | ValueNone, _, _ | _, ValueNone, _ | _, _, ValueNone ->
-            invalidArgNotOfEqualLength "tree"
+            notOfEqualLength "tree"
         | ValueSome (itemA, restA), ValueSome (itemB, restB), ValueSome (itemC, restC) ->
             go (insertRight (itemA, itemB, itemC) current) restA restB restC
     
@@ -2201,7 +2198,8 @@ let randomShuffleWith (random: Random) source =
 /// </summary>
 /// <param name="source">The input tree.</param>
 /// <returns>The result tree.</returns>
-let randomShuffle source = randomShuffleWith Random.Shared
+let randomShuffle source = randomShuffleWith Random.Shared source
+
 /// <summary>
 /// Returns a new tree shuffled in a random order using the specified <c>randomizer</c> function.
 /// </summary>
@@ -2772,8 +2770,11 @@ let collecti mapping tree =
         match viewV tree with
         | ValueNone -> result
         | ValueSome (item, rest) ->
-            mapping index item
-            |> fold (fun result item -> insertRight item result) result
+            let result =
+                mapping index item
+                |> fold (fun result item -> insertRight item result) result
+
+            go result (index + 1) rest
         
     go empty 0 tree
 

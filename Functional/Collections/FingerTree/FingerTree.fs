@@ -48,7 +48,7 @@ module private FingerTreeInternals =
             | Four(_, _, c, _) when index = 2 -> c
             | Four(_, _, _, d) when index = 3 -> d
             
-            | _ -> indexOutOfRangeMustBeWithinCollection()
+            | _ -> indexOutOfCollectionBounds()
         
         override this.ToString () = this.AsString
 

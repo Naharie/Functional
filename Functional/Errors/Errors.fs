@@ -31,5 +31,5 @@ let inline notSupported message =
 /// Raises a NoValidItemException
 /// </summary>
 /// <param name="message">A message explaining the exception.</param>
-/// <exception cref="Functional.NoValidItemException">The exception being raised.</exception>
+/// <exception cref="Functional.Exceptions.NoSuchItemException">The exception being raised.</exception>
 let inline noSuchItem message = raise (NoSuchItemException message)

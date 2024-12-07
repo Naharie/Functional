@@ -3,6 +3,7 @@ module Functional.List
 
 open System.Collections
 open System.Collections.Generic
+open Functional.Errors.CollectionErrors.PredicationOnItems
 
 // Specific
 
@@ -308,7 +309,7 @@ let winnowBack folder list state =
 let findi predicate list =
     let rec find index list =
         match list with
-        | [] -> noSuchItem "An element matching the predicate was not found in the list."
+        | [] -> noMatchingItem()
         | item :: rest ->
             if predicate index item then
                 item
@@ -368,7 +369,7 @@ let tryFindBacki predicate list =
 let picki chooser list =
     let rec pick index list =
         match list with
-        | [] -> noSuchItem "An element matching the predicate was not found in the collection."
+        | [] -> noMatchingItem()
         | item :: rest ->
             match chooser index item with
             | Some v -> v

@@ -3,6 +3,7 @@ module Functional.Seq
 
 open System.Collections
 open System.Collections.Generic
+open Functional.Errors.CollectionErrors.PredicationOnItems
 
 // Generic
 
@@ -222,11 +223,16 @@ let tryFindBacki predicate sequence =
 let picki chooser sequence =
     let mutable index = -1
     
-    sequence
-    |> Seq.pick (fun item ->
-        index <- index + 1
-        chooser index item
-    )
+    try
+        sequence
+        |> Seq.pick (fun item ->
+            index <- index + 1
+            chooser index item
+        )
+    with
+    // Replace the more generic KeyNotFoundException with the more specific NoSuchItemException
+    | :? KeyNotFoundException as e ->
+        noMatchingItem()
 
 /// Returns the first element for which the given predicate returns Some x.
 /// If there is no such element then None is returned instead.
@@ -416,7 +422,7 @@ let collapse (rule: 't -> 't -> 't option) (sequence: #seq<'t>) =
 
             yield state
     }
-    
+
 /// Counts the number of items that match the specified rule.
 let count rule (array: 't seq) =
     let mutable count = 0
