@@ -200,7 +200,7 @@ let topologicalSort (graph : Graph<'t>) =
 /// <param name="goal">The ending vertex.</param>
 /// <param name="graph">The graph to traverse.</param>
 /// <returns>The shortest possible path from the starting vertex to the ending vertex or ValueNone if there is no such path.</returns>
-let a_star heuristic (weight: 't -> 't -> int) start goal (graph: Graph<'t>) =
+let shortestPath heuristic (weight: 't -> 't -> int) start goal (graph: Graph<'t>) =
     let neighborMap = getOutgoing graph
 
     let reconstructPath cameFrom current =
@@ -217,12 +217,12 @@ let a_star heuristic (weight: 't -> 't -> int) start goal (graph: Graph<'t>) =
         if BinaryHeap.isEmpty openHeap then
             ValueNone
         else
-            let current = BinaryHeap.minOrMax openHeap
+            let current = BinaryHeap.extreme openHeap
 
             if current = goal then
                 ValueSome (reconstructPath cameFrom current)
             else
-                let openHeap = BinaryHeap.removeMinOrMax openHeap
+                let openHeap = BinaryHeap.removeExtreme openHeap
                 let openSet = Set.remove current openSet
 
                 let neighbors = neighborMap |> Map.find current
