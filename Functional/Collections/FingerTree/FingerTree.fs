@@ -239,3 +239,18 @@ with
                yield item
                tree <- rest
    |]
+    
+/// Functions that need to be shared by the builder and the module.
+/// It is marked as obsolete so user code doesn't use it directly, but not private so inlining for the builder still works.
+[<Obsolete>]
+module FingerTreeShared =
+    let rec insertRight<'t> (value: 't) (tree: FingerTree<'t>): FingerTree<'t> =
+        match tree with
+        | Blank -> Single value
+        | Single a -> Deep (One a, Blank, One value)
+
+        | Deep (left, middle, Four (a, b, c, d)) ->
+            Deep (left, insertRight (Node3 (a, b, c)) middle, Two(d, value))
+
+        | Deep (left, middle, right) ->
+            Deep (left, middle, Digit.append value right)

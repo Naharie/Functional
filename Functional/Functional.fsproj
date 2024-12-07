@@ -32,9 +32,17 @@
         <Compile Include="Numbers\Prelude.fs" />
 
         <Compile Include="Text\String.fs" />
+
+        <Compile Include="ComputationBuilders\ComputationBuilders.fs" />
+
+        <Compile Include="ComputationBuilders\CollectionBuilders.fs" />
+
+        <Compile Include="ComputationBuilders\FastStopBuilder.fs" />
+        <Compile Include="ComputationBuilders\Maybe.fs" />
+        <Compile Include="ComputationBuilders\Result.fs" />
+        <Compile Include="ComputationBuilders\Prelude.fs" />
         
         <Compile Include="Collections\CollectionTypes.fs" />
-        
         <Compile Include="Collections\Array.fs" />
         <Compile Include="Collections\List.fs" />
         <Compile Include="Collections\Seq.fs" />
@@ -42,18 +50,15 @@
         <Compile Include="Collections\Set.fs" />
         <Compile Include="Collections\Dictionary.fs" />
         <Compile Include="Collections\BinaryHeap.fs" />
-        <Compile Include="Collections\FingerTree.fs" />
-        <Compile Include="Collections\FingerTreeModule.fs" />
+        <Compile Include="Collections\FingerTree\FingerTree.fs" />
+        <Compile Include="Collections\FingerTree\FingerTreeBuilder.fs" />
+        <Compile Include="Collections\FingerTree\FingerTreeModule.fs" />
         <Compile Include="Collections\Queue.fs" />
         <Compile Include="Collections\Dequeue.fs" />
-        <Compile Include="Collections\Vector.fs" />
-        <Compile Include="Collections\VectorModule.fs" />
-
-        <Compile Include="ComputationBuilders\ComputationBuilders.fs" />
-        <Compile Include="ComputationBuilders\Maybe.fs" />
-        <Compile Include="ComputationBuilders\Result.fs" />
-        <Compile Include="ComputationBuilders\FastStopBuilder.fs" />
-        <Compile Include="ComputationBuilders\Prelude.fs" />
+        <Compile Include="Collections\Vector\Vector.fs" />
+        <Compile Include="Collections\Vector\VectorModule.fs" />
+        <Compile Include="Collections\ResizeArray.fs" />
+        <Compile Include="Collections\Prelude.fs" />
         
         <Compile Include="Graphs\Graph.Types.fs" />
         <Compile Include="Graphs\Graph.fs" />
