@@ -15,5 +15,5 @@ type FingerTreeBuilder() =
     member inline this.YieldFrom vs =
         this.For(vs, this.Yield)
         
-    member inline _.Run (f: FingerTree<'t> -> FingerTree<'t>) =
-        f Blank
+    member inline _.Run ([<InlineIfLambda>] f: FingerTree<'t> -> FingerTree<'t>) =
+        f FingerTreeShared.empty

@@ -8,7 +8,7 @@ type MaybeBuilder() =
     member _.ReturnFrom (value: 't option) = Value value
     member _.ReturnFrom (value: Nullable<'t>) =
         Value(if value.HasValue then Some value.Value else None)
-    member _.ReturnFrom (value: (bool * 't)) =
+    member _.ReturnFrom (value: bool * 't) =
         Value(if fst value then Some (snd value) else None)
 
     member this.Bind (value: _ option Computation, func: 'a -> 'b option Computation) =
@@ -36,7 +36,7 @@ type MaybeBuilder() =
         )
     member this.Bind (value: Nullable<'t>, func) =
         this.Bind(Value (if value.HasValue then Some value.Value else None), func)
-    member this.Bind (value : (bool * 't), func) =
+    member this.Bind (value : bool * 't, func) =
         this.Bind(Value (if fst value then Some (snd value) else None), func)
     member this.Bind (value : bool, func) =
         this.Bind(Value (if value then Some () else None), func)

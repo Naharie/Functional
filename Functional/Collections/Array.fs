@@ -47,13 +47,14 @@ let repeat count (array: 't[]) =
     output
 
 /// <summary>
-/// Creates an table with the specified number of inner and outer items and initialized with the given function.
+/// Creates a table with the specified number of inner and outer items and initialized with the given function.
 /// </summary>
 /// <param name="inner">The number of items in each row.</param>
 /// <param name="outer">The number of rows.</param>
 /// <param name="initializer">The initializer function.</param>
 /// <exception cref="System.ArgumentException"><c>inner</c> was less than zero.</exception>
 /// <exception cref="System.ArgumentException"><c>outer</c> was less than zero.</exception>
+/// <returns>The resulting array of arrays.</returns>
 let table inner outer initializer =
     ensureNonNegative (nameof inner) inner
     ensureNonNegative (nameof outer) outer
@@ -76,7 +77,7 @@ let mapScan mapping (state: 'state) (array: 't[]) =
 /// </summary>
 /// <param name="mapping">The mapping to apply.</param>
 /// <param name="state">The initial starting state.</param>
-/// <param name="array">The input array..</param>
+/// <param name="array">The input array.</param>
 /// <returns>The resulting array.</returns>
 /// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
 let mapScanBack mapping state array =
@@ -88,16 +89,16 @@ let mapScanBack mapping state array =
 /// <param name="enumerator">The enumerator to convert.</param>
 /// <returns>The resulting array.</returns>
 /// <exception cref="System.NullArgumentException"><c>enumerator</c> was null.</exception>
-let fromUntypedEnumerator (enumerator: IEnumerator) =
+let ofUntypedEnumerator (enumerator: IEnumerator) =
     ensureNotNull (nameof enumerator) enumerator
     [| while enumerator.MoveNext() do yield enumerator.Current |]
 /// <summary>
 /// Converts an <c>IEnumerator&lt;'t&gt;</c> to an array of 't.
 /// </summary>
 /// <param name="enumerator">The enumerator to convert.</param>
-/// <returns>The resulting list.</returns>
+/// <returns>The resulting array.</returns>
 /// /// <exception cref="System.NullArgumentException"><c>enumerator</c> was null.</exception>
-let fromEnumerator (enumerator: IEnumerator<'t>) =
+let ofEnumerator (enumerator: IEnumerator<'t>) =
     ensureNotNull (nameof enumerator) enumerator
     [| while enumerator.MoveNext() do yield enumerator.Current |]
 
@@ -106,7 +107,7 @@ let fromEnumerator (enumerator: IEnumerator<'t>) =
 /// </summary>
 /// <param name="collection">The collection to convert.</param>
 /// <returns>The resulting array.</returns>
-let inline fromCollection< ^c, ^t when ^c : (member Count: int) and ^c : (member Item: int -> ^t) > (collection: ^c) =
+let inline ofCollection< ^c, ^t when ^c : (member Count: int) and ^c : (member Item: int -> ^t) > (collection: ^c) =
     Array.init collection.Count collection.Item
 
 /// <summary>
@@ -136,7 +137,7 @@ let foldi folder (state: 'state) (array: 't[]) =
     let mutable result = state
 
     for i = 0 to array.Length - 1 do
-        result <- f.Invoke(i, result, array.[i])
+        result <- f.Invoke(i, result, array[i])
 
     result
 /// <summary>
@@ -154,7 +155,7 @@ let foldBacki folder (state: 'state) (array: 't[]) =
     let mutable result = state
 
     for i = array.Length - 1 downto 0 do
-        result <- f.Invoke(i, result, array.[i])
+        result <- f.Invoke(i, result, array[i])
 
     result
 
@@ -287,7 +288,7 @@ let threshBack folder array state =
     let length = Array.length array
     let mask = BitArray length
 
-    for index in (length - 1)..(-1)..0 do
+    for index in (length - 1).. -1 ..0 do
         let keep, newState = folder array[index]
         state <- newState
         mask[index] <- keep
@@ -367,7 +368,6 @@ let findi predicate (array: 't[]) =
             go (index + 1)
         
     go 0
-
 /// <summary>
 /// Returns the last element for which the given predicate returns <c>true</c>.
 /// </summary>
@@ -408,7 +408,6 @@ let tryFindi predicate (array: 't[]) =
             go (index + 1)
         
     go 0
-
 /// <summary>
 /// Returns the last element for which the given predicate returns <c>true</c> or <c>None</c> if there is no such element.
 /// </summary>
@@ -532,7 +531,6 @@ let choosei predicate array =
             
             index <- index + 1
     |]
-
 /// <summary>
 /// Removes all instances of the specified value from the array.
 /// </summary>
@@ -580,7 +578,7 @@ let withoutMany (values: #seq<'t>) (array: 't[]) =
 /// </code>
 /// </example>
 /// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
-let insertions value array =
+let insertions value (array: 't[]) =
     ensureNotNull (nameof array) array
     
     let size = Array.length array + 1
@@ -600,7 +598,7 @@ let insertions value array =
 /// <param name="array">The input array.</param>
 /// <returns>All possible permutations of the given values.</returns>
 /// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
-let rec permutations array =
+let rec permutations (array: 't[]) =
     ensureNotNull (nameof array) array
     
     if Array.isEmpty array then
@@ -617,7 +615,7 @@ let rec permutations array =
 /// <param name="array">The input array.</param>
 /// <returns>All pairs where both items are from unique indexes.</returns>
 /// <exception cref="System.NullArgumentException"><c>array</c> was null.</exception>
-let pairs array =
+let pairs (array: 't[]) =
     ensureNotNull (nameof array) array
     
     [|

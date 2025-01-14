@@ -100,7 +100,7 @@ let mapScanBack mapping state list =
 /// <param name="enumerator">The enumerator to convert.</param>
 /// <returns>The resulting list.</returns>
 /// <exception cref="System.NullArgumentException"><c>enumerator</c> was null.</exception>
-let fromUntypedEnumerator (enumerator: IEnumerator) =
+let ofUntypedEnumerator (enumerator: IEnumerator) =
     ensureNotNull (nameof enumerator) enumerator
     [ while enumerator.MoveNext() do yield enumerator.Current ]
 
@@ -110,7 +110,7 @@ let fromUntypedEnumerator (enumerator: IEnumerator) =
 /// <param name="enumerator">The enumerator to convert.</param>
 /// <returns>The resulting list.</returns>
 /// <exception cref="System.NullArgumentException"><c>enumerator</c> was null.</exception>
-let fromEnumerator (enumerator: IEnumerator<'t>) =
+let ofEnumerator (enumerator: IEnumerator<'t>) =
     ensureNotNull (nameof enumerator) enumerator
     [ while enumerator.MoveNext() do yield enumerator.Current ]
 
@@ -119,7 +119,7 @@ let fromEnumerator (enumerator: IEnumerator<'t>) =
 /// </summary>
 /// <param name="collection">The collection to convert.</param>
 /// <returns>The resulting list.</returns>
-let inline fromCollection< ^c, ^t when ^c : (member Count: int) and ^c : (member Item: int -> ^t) > (collection: ^c) =
+let inline ofCollection< ^c, ^t when ^c : (member Count: int) and ^c : (member Item: int -> ^t) > (collection: ^c) =
     List.init collection.Count collection.Item
 
 /// <summary>

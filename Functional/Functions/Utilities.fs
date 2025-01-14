@@ -9,6 +9,9 @@ let inline apply2 f (x, y) = f x y
 let inline applyBack f y x  = f x y
 let inline applyBack3 f c b a = f a b c
 
+let inline applyWith2 f x = f x x
+let inline applyWith3 f x = f x x x
+
 let inline applyABC f a b c = f a b c
 let inline applyACB f a c b = f a b c
 let inline applyBAC f b a c = f a b c
@@ -19,6 +22,9 @@ let inline applyCBA f c b a = f a b c
 let inline (@@) f b a = f a b
 let inline (@@@) f c b a = f a b c
 
+let inline (%@@) f x = f x x
+let inline (%@@@) f x = f x x x
+
 let inline constant x _ = x
 
 /// <summary>
@@ -27,7 +33,7 @@ let inline constant x _ = x
 /// <param name="note">The note to display.</param>
 /// <param name="x">The value to pass through.</param>
 /// <returns>The value of <paramref name="x"/>.</returns>
-let note (note: string) x =
+let trace (note: string) x =
     Console.WriteLine note
     x
 

@@ -86,7 +86,7 @@ module BinaryHeap =
     /// <returns>True if the heap is empty; false otherwise.</returns>
     let isEmpty (heap: BinaryHeap<'t>) = heap.IsEmpty
 
-    let rec private insertInternal kind ((priority, _) as pair) heap =
+    let rec private insertInternal kind (priority, _ as pair) heap =
         let inline compare priorityA priorityB =
             match kind with
             | MinHeap -> priorityA < priorityB
@@ -100,7 +100,7 @@ module BinaryHeap =
             else
                 Node (pair', One pair)
         
-        | Node ((priority', _) as pair', child) ->
+        | Node (priority', _ as pair', child) ->
             let a, b =
                 if compare priority priority' then
                     pair, pair'
@@ -133,7 +133,7 @@ module BinaryHeap =
                     Pair (pair', left, right, left.HasEmptySpace)
     
     /// <summary>
-    /// Inserts the pairing of an element and it's numeric weight into the given heap.
+    /// Inserts the pairing of an element, and it's numeric weight into the given heap.
     /// </summary>
     /// <param name="pair">The pair to insert.</param>
     /// <param name="heap">The heap to insert into.</param>
@@ -151,13 +151,13 @@ module BinaryHeap =
             | Blank -> b
             | One pair -> insertInternal kind pair b
 
-            | Node ((priority, _) as pair, child) ->
+            | Node (priority, _ as pair, child) ->
                 if priority < priority' then
                     Pair (pair, child, b, child.HasEmptySpace || b.HasEmptySpace)
                 else
                     Pair (pair', b, child, child.HasEmptySpace || b.HasEmptySpace)
 
-            | Pair ((priority, _) as pair, left, right, _) ->
+            | Pair (priority, _ as pair, left, right, _) ->
                 if priority < priority' then
                     if left.HasEmptySpace then
                         let left = mergeInternal kind left b

@@ -45,7 +45,7 @@ let mergeMany (maps: #seq<Map<_, _>>) =
 /// <param name="items">The items to add.</param>
 /// <param name="map">The map to add the values to.</param>
 /// <returns>The resulting map.</returns>
-let addMany (items: #seq<('key * 'value)>) map =
+let addMany (items: #seq<'key * 'value>) map =
     items
     |> Seq.fold (fun map (key, value) ->
         Map.add key value map

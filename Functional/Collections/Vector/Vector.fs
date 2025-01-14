@@ -4,7 +4,7 @@ open Functional
 open System.Collections.Generic
 open Functional.Errors.CollectionErrors
 
-/// An immutable vector with amortized O(1) append and O(n log n) lookups and edits.
+/// An immutable vector with amortized O(1) append and O(log n) lookups and edits.
 [<StructuredFormatDisplay "{AsString}">]
 type vec<'t> =
     private
@@ -19,11 +19,12 @@ with
         toSeq this
     
     interface IEnumerable<'t> with
-        member this.GetEnumerator () =
+        member this.GetEnumerator (): IEnumerator<'t> =
             this.ToSeq().GetEnumerator()
 
         member this.GetEnumerator(): System.Collections.IEnumerator = 
             (this :> IEnumerable<'t>).GetEnumerator() :> System.Collections.IEnumerator
+
     interface IReadOnlyCollection<'t> with
         member this.Count = this.Length
         

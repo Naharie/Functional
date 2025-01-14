@@ -2,7 +2,7 @@ namespace Functional
 
 open System
 open System.Collections.Generic
-open Functional.Errors.CollectionErrors
+open Functional.Errors.CollectionErrors.NotEnoughItems
 open Microsoft.FSharp.Core
 
 [<AutoOpen>]
@@ -244,6 +244,8 @@ with
 /// It is marked as obsolete so user code doesn't use it directly, but not private so inlining for the builder still works.
 [<Obsolete>]
 module FingerTreeShared =
+    let empty<'t> = Blank : FingerTree<'t>
+    
     let rec insertRight<'t> (value: 't) (tree: FingerTree<'t>): FingerTree<'t> =
         match tree with
         | Blank -> Single value
