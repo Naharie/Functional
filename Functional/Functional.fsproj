@@ -17,11 +17,15 @@
         <Compile Include="ActivePatterns.fs" />
         <Compile Include="Purity.fs" />
         <Compile Include="Observable.fs" />
-        <Compile Include="Async.fs" />
         <Compile Include="Enum.fs" />
         <Compile Include="Option.fs" />
         <Compile Include="Result.fs" />
         <Compile Include="Tuple.fs" />
+        
+        <Compile Include="Async\Async.fs" />
+        
+        <Compile Include="Async\Prelude.fs" />
+        
         <Compile Include="Functions\Utilities.fs" />
         <Compile Include="Functions\Meta.fs" />
 
@@ -71,6 +75,7 @@
         <Compile Include="Prelude.fs" />
         
         <Folder Include="Data\" />
+        
     </ItemGroup>
 
     <ItemGroup>
