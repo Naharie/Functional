@@ -2905,7 +2905,7 @@ let pairs tree =
 /// <param name="options">What to do with the separator.</param>
 /// <param name="predicate">The predicate to determine if an element is a separator.</param>
 /// <param name="tree">The tree to split.</param>
-let splitByOptions options predicate (tree: 't tree) =
+let splitByOptions options predicate (tree: FingerTree<'t>) =
     fingerTree {
         let buffer = ResizeArray()
 
@@ -2913,25 +2913,25 @@ let splitByOptions options predicate (tree: 't tree) =
             if predicate item then
                 match options with
                 | DoNotIncludeSeparator ->
-                    yield buffer.ToArray() |> List.ofArray
+                    yield buffer.ToArray() |> ofArray
                     buffer.Clear()
                 | IncludeSeparatorAsFirstElement ->
-                    yield buffer.ToArray() |> List.ofArray
+                    yield buffer.ToArray() |> ofArray
                     buffer.Clear()
                     buffer.Add item
                 | IncludeSeparatorAsLastElement ->
                     buffer.Add item
-                    yield buffer.ToArray() |> List.ofArray
+                    yield buffer.ToArray() |> ofArray
                     buffer.Clear()
                 | IncludeSeparatorAsOwnGroup ->
-                    yield buffer.ToArray() |> List.ofArray
-                    yield List.singleton item
+                    yield buffer.ToArray() |> ofArray
+                    yield singleton item
                     buffer.Clear()
             else
                 buffer.Add item
 
         if buffer.Count > 0 then 
-            yield buffer.ToArray() |> List.ofArray
+            yield buffer.ToArray() |> ofArray
     }
 /// <summary>
 /// Splits the input tree into multiple trees.
@@ -2939,7 +2939,7 @@ let splitByOptions options predicate (tree: 't tree) =
 /// </summary>
 /// <param name="predicate">The predicate to determine if an element is a separator.</param>
 /// <param name="tree">The tree to split.</param>
-let splitBy predicate (tree: 't tree) = splitByOptions DoNotIncludeSeparator predicate tree
+let splitBy predicate (tree: FingerTree<'t>) = splitByOptions DoNotIncludeSeparator predicate tree
 
 /// <summary>
 /// Collapses a tree according to the specified rule.

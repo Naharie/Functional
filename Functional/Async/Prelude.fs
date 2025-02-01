@@ -15,8 +15,10 @@ type Microsoft.FSharp.Control.AsyncBuilder with
                 let! result = body resource
                 do! Async.AwaitTask(resource.DisposeAsync().AsTask())
                 return result
-            with _ ->
+            with exn ->
                 do! Async.AwaitTask(resource.DisposeAsync().AsTask())
+                raise exn
+                return Unchecked.defaultof<'r>
         }
 
     member this.For(sequence: IAsyncEnumerable<'t>, handler: 't -> Async<unit>) =
